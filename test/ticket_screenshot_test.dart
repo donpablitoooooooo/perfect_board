@@ -94,7 +94,7 @@ void main() {
     final shots = TicketScreenshot.takeShots('new');
     expect(shots, hasLength(1));
     expect(shots.single.name, endsWith('.png'));
-    final png = shots.single.bytes!;
+    final png = shots.single.bytes;
     expect(png.sublist(0, 4), [0x89, 0x50, 0x4E, 0x47]);
     // Misure dall'intestazione IHDR: quelle della cornice (976×476, a meno
     // del pixel di tolleranza del trascinamento).
@@ -138,7 +138,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('RITORNO'), findsOneWidget);
 
-    final png = TicketScreenshot.takeShots('new').single.bytes!;
+    final png = TicketScreenshot.takeShots('new').single.bytes;
     // Il tratto va da (640,400) a (840,400) nella finestra; la cornice parte
     // da (24,24). A metà tratto il pixel è rosso.
     final rgba = await tester.runAsync(() async {

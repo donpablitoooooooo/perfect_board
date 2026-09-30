@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:file_picker/file_picker.dart';
+import 'package:perfect_board/src/board_file.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:perfect_board/perfect_board.dart';
@@ -23,8 +23,8 @@ void main() {
     // Se provasse Storage o Firestore fallirebbe: Firebase qui non c'è.
     await uploadTicketAttachment(
       ticketId: 't1',
-      file: PlatformFile(
-          name: 'shot.png', size: 3, bytes: Uint8List.fromList([1, 2, 3])),
+      file: BoardFile(
+          name: 'shot.png', bytes: Uint8List.fromList([1, 2, 3])),
       commentId: 'c1',
     );
 

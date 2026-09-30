@@ -8,7 +8,7 @@ import 'package:perfect_board/src/local_attachments.dart';
 import 'package:perfect_board/src/widgets/ticket_attachment_preview.dart';
 import 'package:perfect_board/src/widgets/ticket_screenshot.dart';
 import 'package:perfect_board/src/widgets/ticket_ui.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:perfect_board/src/board_file.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:perfect_board/src/l10n.dart';
@@ -64,11 +64,10 @@ String ticketAttachmentContentType(String? extension) {
 /// Solleva l'eccezione: chi chiama decide cosa dire all'utente.
 Future<void> uploadTicketAttachment({
   required String ticketId,
-  required PlatformFile file,
+  required BoardFile file,
   String? commentId,
 }) async {
   final bytes = file.bytes;
-  if (bytes == null) throw StateError('File not readable: ${file.name}');
   if (bytes.length > kTicketAttachmentMaxBytes) {
     throw StateError('File too large: ${file.name}');
   }
@@ -157,15 +156,9 @@ class _TicketAttachmentsState extends State<TicketAttachments> {
   Future<void> _pickAndUpload() async {
     if (_uploading) return;
     try {
-      final picked = await FilePicker.platform.pickFiles(
-        withData: true,
-        allowMultiple: true,
-      );
-      if (picked == null || picked.files.isEmpty) return;
-
-      final tooBig = picked.files
-          .where((f) => (f.bytes?.length ?? 0) > kTicketAttachmentMaxBytes)
-          .toList();
+      final (:files, :tooBig) =
+          await pickBoardFiles(maxBytes: kTicketAttachmentMaxBytes);
+      if (files.isEmpty && tooBig.isEmpty) return;
       if (tooBig.isNotEmpty) {
         if (mounted) {
           ticketToast(context, bt('tooLarge'));
@@ -174,7 +167,7 @@ class _TicketAttachmentsState extends State<TicketAttachments> {
       }
 
       setState(() => _uploading = true);
-      for (final file in picked.files) {
+      for (final file in files) {
         await uploadTicketAttachment(
           ticketId: widget.ticketId,
           file: file,
@@ -183,9 +176,9 @@ class _TicketAttachmentsState extends State<TicketAttachments> {
       if (mounted) {
         ticketToast(
           context,
-          picked.files.length == 1
+          files.length == 1
               ? bt('uploaded')
-              : bt('uploadedMany', {'count': '${picked.files.length}'}),
+              : bt('uploadedMany', {'count': '${files.length}'}),
         );
       }
     } catch (e) {

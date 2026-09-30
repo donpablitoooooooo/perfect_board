@@ -53,7 +53,7 @@ finché non ricarichi.
 
 ## Requisiti
 
-- Flutter ≥ 3.27, `go_router` per la navigazione.
+- Flutter ≥ 3.38 (iOS ≥ 14), `go_router` per la navigazione.
 - Firebase: Auth, Firestore, Storage, Cloud Functions (contatori e pulizia).
 - Gli admin sono gli utenti con il custom claim `admin: true` ed email
   verificata.

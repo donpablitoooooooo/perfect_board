@@ -9,7 +9,7 @@ import 'package:perfect_board/src/widgets/ticket_fields.dart';
 import 'package:perfect_board/src/widgets/ticket_refs.dart';
 import 'package:perfect_board/src/widgets/ticket_screenshot.dart';
 import 'package:perfect_board/src/widgets/ticket_ui.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:perfect_board/src/board_file.dart';
 import 'package:flutter/material.dart';
 import 'package:perfect_board/src/l10n.dart';
 import 'package:gap/gap.dart';
@@ -31,7 +31,7 @@ class _NewTicketDraft {
   final Set<TicketLabel> labels;
   final List<TicketRef> refs;
   final List<ChecklistItem> checklist;
-  final List<PlatformFile> files;
+  final List<BoardFile> files;
   final DateTime? dueAt;
 
   const _NewTicketDraft({
@@ -63,7 +63,7 @@ class _TicketNewPageState extends State<TicketNewPage> {
   final Set<TicketLabel> _labels = {};
   final List<TicketRef> _refs = [];
   final List<ChecklistItem> _checklist = [];
-  final List<PlatformFile> _files = [];
+  final List<BoardFile> _files = [];
   DateTime? _dueAt;
 
   bool _saving = false;
@@ -131,23 +131,11 @@ class _TicketNewPageState extends State<TicketNewPage> {
       _title.text.trim().isNotEmpty && _body.text.trim().isNotEmpty;
 
   Future<void> _pickFiles() async {
-    final picked = await FilePicker.platform.pickFiles(
-      withData: true,
-      allowMultiple: true,
-    );
-    if (picked == null || picked.files.isEmpty) return;
-
-    final tooBig = <String>[];
-    setState(() {
-      for (final file in picked.files) {
-        if ((file.bytes?.length ?? 0) > kTicketAttachmentMaxBytes) {
-          tooBig.add(file.name);
-        } else {
-          _files.add(file);
-        }
-      }
-    });
-    if (tooBig.isNotEmpty && mounted) {
+    final (:files, :tooBig) =
+        await pickBoardFiles(maxBytes: kTicketAttachmentMaxBytes);
+    if (!mounted) return;
+    if (files.isNotEmpty) setState(() => _files.addAll(files));
+    if (tooBig.isNotEmpty) {
       ticketToast(
         context,
         bt('skippedTooBig', {'files': tooBig.join(', ')}),

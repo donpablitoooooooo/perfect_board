@@ -1,3 +1,15 @@
+## 0.3.0
+
+- **Needs Flutter 3.38** (Dart 3.10) and, on iOS, 14.0: `file_picker` 13
+  requires them.
+- `file_picker` 13. The board now keeps picked files in its own
+  `BoardFile` (name and bytes) and uses `file_picker` in one place only.
+- Accepts the latest `go_router` (18), `cached_network_image` (4) and
+  `file_saver` (0.6) while still working with the previous majors.
+- `cached_network_image` needs at least 3.4.1 (3.2.0 no longer builds with
+  current Flutter).
+- Shorter package description.
+
 ## 0.2.0
 
 - **Demo mode**: `PerfectBoard.configure(demo: ...)`. Each demo user (in
