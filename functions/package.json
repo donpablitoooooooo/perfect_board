@@ -1,0 +1,21 @@
+{
+  "name": "perfect-board-functions",
+  "description": "Cloud Functions and CLI for perfect_board",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "board": "node board.js",
+    "test:rules": "cd ../firebase && firebase emulators:exec --only firestore \"node ../functions/test_rules.js\""
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.3.2"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
+    "firebase": "^12.19.0"
+  }
+}
