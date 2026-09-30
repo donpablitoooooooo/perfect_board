@@ -43,8 +43,10 @@ lingua.
 
 ## Provarla
 
-**Demo online**: <https://perfect-board-3ce55.web.app> (serve il login da
-admin: è un'istanza vera, non una sandbox pubblica).
+**Demo online**: <https://perfect-board-3ce55.web.app>, premi *Try the
+demo*. Hai una board tutta tua, che nessun
+altro vede e che si cancella dopo un giorno; i file restano nel tuo browser
+finché non ricarichi.
 
 `example/` gira sugli emulatori Firebase o sul tuo progetto: vedi
 [example/README.md](example/README.md).
@@ -171,8 +173,9 @@ con un'icona generica.
 
 1. **Regole**: `firebase/firestore.rules` e `firebase/storage.rules`. Se hai
    già le tue regole, copia dentro i blocchi `Tickets` e `uploads/tickets`.
-2. **Functions**: deploya `functions/` (o riesporta i quattro trigger di
-   `functions/index.js` dalle tue functions). La regione di default è
+2. **Functions**: deploya `functions/`
+   (`firebase deploy --only functions`, dalla radice del repo), o riesporta i
+   trigger di `functions/index.js` dalle tue functions. La regione di default è
    `europe-west1`; `BOARD_FUNCTIONS_REGION` per cambiarla, in base alla
    località del database.
 3. **CORS** sul bucket, per l'anteprima di PDF e testo nel browser:
@@ -190,6 +193,27 @@ verificata. `functions/set_admin.js` imposta entrambi per un utente esistente:
 ```bash
 BOARD_PROJECT_ID=il-tuo-progetto node functions/set_admin.js tu@example.com
 ```
+
+### Modalità demo
+
+Per far provare la board a chiunque, attiva il login **Anonimo** e di' alla
+board quali utenti sono demo:
+
+```dart
+PerfectBoard.configure(
+  // …
+  demo: () => FirebaseAuth.instance.currentUser?.isAnonymous ?? false,
+);
+```
+
+Ogni utente demo ha una **board privata**: le schede che apre portano
+`sandbox` = il suo uid, vede solo quelle e nessun altro le vede (nemmeno
+gli admin). Allegati e schermate restano in memoria, miniature e anteprime
+comprese, e spariscono ricaricando. Lo fa rispettare
+`firebase/firestore.rules`. Le board demo restano finché non le togli tu;
+per farle pulire ogni notte (board più vecchie di un giorno e utenti
+anonimi fermi) togli il commento a `demoCleanup` in `functions/index.js` e
+deploya `functions/`.
 
 ## CLI
 

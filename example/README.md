@@ -6,7 +6,6 @@ No real project needed. / Non serve un progetto vero.
 
 ```bash
 # 1. emulators, from the repo root / emulatori, dalla radice del repo
-cd firebase
 firebase emulators:start --only auth,firestore,storage --project demo-perfect-board
 
 # 2. in another terminal: the admin user / in un altro terminale: l'utente admin
@@ -22,9 +21,8 @@ cd example && flutter run -d chrome
    **Storage**; add a **Web app** and keep its config. / Console → attiva
    **Authentication** (Email/Password), **Firestore**, **Storage**; aggiungi
    una **app Web** e tieni a portata la sua configurazione.
-2. Rules / Regole:
+2. Rules, from the repo root / Regole, dalla radice del repo:
    ```bash
-   cd firebase
    firebase deploy --only firestore:rules,storage --project YOUR-PROJECT
    ```
 3. Create a user in the console (Authentication → Add user), then make it an
@@ -55,7 +53,16 @@ cd example && flutter run -d chrome
    `web_config.json` is ignored by git; the site ends up on
    `https://YOUR-PROJECT.web.app`. / `web_config.json` è ignorato da git; il
    sito finisce su `https://IL-TUO-PROGETTO.web.app`.
-6. Optional / Facoltativo: deploy `functions/` for comment and attachment
-   counters (Blaze plan) / per i contatori di commenti e allegati (piano
-   Blaze): `firebase deploy --only functions --project YOUR-PROJECT` from a
-   `firebase.json` that points `functions` at `../functions`.
+6. Optional, a public demo / Facoltativo, una demo pubblica: console →
+   Authentication → Sign-in method → enable **Anonymous** / attiva
+   **Anonimo**. The login page already has *Try the demo* / Il login ha già
+   *Try the demo*. Nightly cleanup of demo boards: optional, see
+   `functions/index.js` / Pulizia notturna delle board demo: facoltativa,
+   vedi `functions/index.js`.
+7. Optional / Facoltativo: comment and attachment counters on the cards
+   (Blaze plan) / i contatori di commenti e allegati sulle card (piano
+   Blaze):
+   ```bash
+   cd functions && npm install && cd ..
+   firebase deploy --only functions --project YOUR-PROJECT
+   ```

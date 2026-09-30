@@ -8,7 +8,7 @@
   },
   "scripts": {
     "board": "node board.js",
-    "test:rules": "cd ../firebase && firebase emulators:exec --only firestore \"node ../functions/test_rules.js\""
+    "test:rules": "cd .. && firebase emulators:exec --only firestore \"node functions/test_rules.js\""
   },
   "dependencies": {
     "firebase-admin": "^12.7.0",

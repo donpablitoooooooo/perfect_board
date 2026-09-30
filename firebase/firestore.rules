@@ -20,15 +20,39 @@ service cloud.firestore {
                     request.auth.token.admin == true;
         }
 
+        // Account demo = login anonimo. Ha una board privata: vede e tocca
+        // solo le schede con `sandbox` uguale al suo uid, e non carica file
+        // (li tiene in memoria nel browser). Pulizia notturna facoltativa:
+        // `demoCleanup` (functions/demo_cleanup.js).
+        function isDemo() {
+            return request.auth != null &&
+                    request.auth.token.firebase.sign_in_provider == 'anonymous';
+        }
+
+        // Scheda della board privata di chi chiede.
+        function inSandbox(ticketId) {
+            return isDemo() &&
+                    get(/databases/$(database)/documents/Tickets/$(ticketId))
+                        .data.get('sandbox', '') == request.auth.uid;
+        }
+
         // La board: ogni admin deve poterla vedere e muovere.
         match /Tickets/{ticketId} {
-            allow read, create, update, delete: if isAdmin();
+            // Il demo: solo le sue, e non le sposta in un'altra board.
+            function mine(data) {
+                return isDemo() && data.get('sandbox', '') == request.auth.uid;
+            }
+
+            allow read, delete: if isAdmin() || mine(resource.data);
+            allow create: if isAdmin() || mine(request.resource.data);
+            allow update: if isAdmin() ||
+                    (mine(resource.data) && mine(request.resource.data));
 
             // I commenti sono la conversazione su una scheda: li leggono e
             // li scrivono TUTTI gli admin. Non c'è niente di riservato in
             // una bacheca di lavoro.
             match /Comments/{commentId} {
-                allow read, create: if isAdmin();
+                allow read, create: if isAdmin() || inSandbox(ticketId);
                 // Un commento detto è detto: si risponde, non si riscrive.
                 allow update, delete: if false;
             }
@@ -36,7 +60,9 @@ service cloud.firestore {
             // Metadati degli allegati; i file stanno su Storage sotto
             // `uploads/tickets/...` (vedi storage.rules).
             match /Attachments/{attachmentId} {
-                allow read, create, delete: if isAdmin();
+                allow read: if isAdmin() || inSandbox(ticketId);
+                // Il demo tiene i suoi file in memoria, nel browser.
+                allow create, delete: if isAdmin();
                 // Un allegato si toglie e si ricarica, non si modifica.
                 allow update: if false;
             }

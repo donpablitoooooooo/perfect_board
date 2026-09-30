@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:perfect_board/src/models/ticket.dart';
 import 'package:perfect_board/src/config.dart';
 import 'package:perfect_board/src/widgets/ticket_attachment_preview.dart';
+import 'package:perfect_board/src/local_attachments.dart';
 import 'package:perfect_board/src/widgets/ticket_attachments.dart';
 import 'package:perfect_board/src/widgets/ticket_fields.dart';
 import 'package:perfect_board/src/widgets/ticket_screenshot.dart';
@@ -253,16 +254,31 @@ class _TicketCommentsState extends State<TicketComments> {
                     if (commentId == null) continue;
                     byComment.putIfAbsent(commentId, () => []).add(attachment);
                   }
-                  return Column(
-                    children: [
-                      for (final comment in comments) ...[
-                        _CommentBubble(
-                          comment: comment,
-                          attachments: byComment[comment.id] ?? const [],
-                        ),
-                        const Gap(10),
-                      ],
-                    ],
+                  // Più quelli tenuti in memoria dall'account demo.
+                  return ValueListenableBuilder<int>(
+                    valueListenable: LocalAttachments.changes,
+                    builder: (context, _, __) {
+                      final all = {
+                        for (final e in byComment.entries)
+                          e.key: [...e.value],
+                      };
+                      for (final a in LocalAttachments.of(widget.ticketId)) {
+                        final commentId = a.commentId;
+                        if (commentId == null) continue;
+                        all.putIfAbsent(commentId, () => []).add(a);
+                      }
+                      return Column(
+                        children: [
+                          for (final comment in comments) ...[
+                            _CommentBubble(
+                              comment: comment,
+                              attachments: all[comment.id] ?? const [],
+                            ),
+                            const Gap(10),
+                          ],
+                        ],
+                      );
+                    },
                   );
                 },
               );

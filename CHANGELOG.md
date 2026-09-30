@@ -1,3 +1,16 @@
+## 0.2.0
+
+- **Demo mode**: `PerfectBoard.configure(demo: ...)`. Each demo user (in
+  the example: an anonymous sign-in) gets a private board: its cards carry
+  `sandbox` = its uid and it sees only those. Its files (attachments and
+  screenshots) stay in memory, in the browser, thumbnails and previews
+  included. The rules enforce both.
+- Optional `demoCleanup` Cloud Function (off by default, see
+  `functions/index.js`): every night removes demo boards older than a day
+  and stale anonymous users.
+- The example has a *Try the demo* button that starts
+  a private board with a few sample cards.
+
 ## 0.1.0
 
 First release.

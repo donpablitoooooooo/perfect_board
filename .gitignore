@@ -9,6 +9,7 @@ functions/node_modules/
 functions/serviceAccountKey.json
 functions/ticket-files/
 *-debug.log
+.firebase/
 firebase/.firebase/
 example/build/
 example/web_config.json

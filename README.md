@@ -40,8 +40,10 @@ language.
 
 ## Try it
 
-**Live demo**: <https://perfect-board-3ce55.web.app> (admin login required:
-it is a real instance, not a public sandbox).
+**Live demo**: <https://perfect-board-3ce55.web.app>, press *Try the demo*.
+You get your own private board, which
+nobody else sees and which is wiped after a day; files stay in your browser
+until you reload.
 
 `example/` runs on the Firebase emulators or on your project: see
 [example/README.md](example/README.md).
@@ -168,8 +170,9 @@ generic icon.
 1. **Rules**: `firebase/firestore.rules` and `firebase/storage.rules`. If you
    already have rules, copy the `Tickets` block and `uploads/tickets` block into
    yours.
-2. **Functions**: deploy `functions/` (or re-export the four triggers from
-   `functions/index.js` in your own functions). Region defaults to
+2. **Functions**: deploy `functions/`
+   (`firebase deploy --only functions`, from the repo root), or re-export the
+   triggers from `functions/index.js` in your own functions. Region defaults to
    `europe-west1`; set `BOARD_FUNCTIONS_REGION` to match your database.
 3. **CORS** on the bucket, for PDF/text previews in the browser:
    `gsutil cors set firebase/cors.example.json gs://YOUR-BUCKET` (edit origins
@@ -185,6 +188,26 @@ Admins are users with the custom claim `admin: true` and a verified email.
 ```bash
 BOARD_PROJECT_ID=your-project-id node functions/set_admin.js you@example.com
 ```
+
+### Demo mode
+
+To let anyone try the board, turn on **Anonymous** sign-in and tell the
+board which users are demo ones:
+
+```dart
+PerfectBoard.configure(
+  // …
+  demo: () => FirebaseAuth.instance.currentUser?.isAnonymous ?? false,
+);
+```
+
+Each demo user gets a **private board**: the cards it opens carry
+`sandbox` = its uid, it sees only those, and nobody else sees them (admins
+included). Its attachments and screenshots stay in memory, thumbnails and
+previews included, and vanish on reload. `firebase/firestore.rules`
+enforces all of it. Demo boards stay until you remove them; to have them
+cleaned every night (boards older than a day and stale anonymous users),
+uncomment `demoCleanup` in `functions/index.js` and deploy `functions/`.
 
 ## CLI
 

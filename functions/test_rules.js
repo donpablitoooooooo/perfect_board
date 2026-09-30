@@ -26,6 +26,9 @@ const {
   addDoc,
   collection,
   deleteDoc,
+  getDocs,
+  query,
+  where,
 } = require('firebase/firestore');
 
 let passed = 0;
@@ -87,6 +90,12 @@ async function main() {
       admin: true,
     })
     .firestore();
+  // Login anonimo, come il "Try the demo" dell'esempio.
+  const anonimo1 = (uid) =>
+    env
+      .authenticatedContext(uid, {firebase: {sign_in_provider: 'anonymous'}})
+      .firestore();
+  const demo = anonimo1('demo-uid');
   const cliente = env
     .authenticatedContext('cliente-uid', {
       email_verified: true,
@@ -107,6 +116,16 @@ async function main() {
     await setDoc(doc(db, 'Tickets/t1/Comments/c1'), {
       author: {uid: 'admin-uid', name: 'George'},
       text: 'Succede anche a me.',
+    });
+    await setDoc(doc(db, 'Tickets/s1'), {
+      title: 'La mia prova',
+      status: 'nuova',
+      sandbox: 'demo-uid',
+    });
+    await setDoc(doc(db, 'Tickets/s2'), {
+      title: 'La prova di un altro',
+      status: 'nuova',
+      sandbox: 'altro-demo-uid',
     });
     await setDoc(doc(db, 'Tickets/t1/Attachments/a1'), {
       name: 'schermata.png',
@@ -180,6 +199,82 @@ async function main() {
   await check(
     'un cliente NON legge i commenti',
     assertFails(getDoc(doc(cliente, 'Tickets/t1/Comments/c1'))),
+  );
+
+  console.log('\nDemo (anonimo): solo la sua board privata, niente file');
+  await check(
+    'il demo legge una sua scheda',
+    assertSucceeds(getDoc(doc(demo, 'Tickets/s1'))),
+  );
+  await check(
+    'il demo elenca la sua board',
+    assertSucceeds(
+      getDocs(query(collection(demo, 'Tickets'), where('sandbox', '==', 'demo-uid'))),
+    ),
+  );
+  await check(
+    'il demo NON elenca tutte le schede',
+    assertFails(getDocs(collection(demo, 'Tickets'))),
+  );
+  await check(
+    'il demo NON legge le schede vere',
+    assertFails(getDoc(doc(demo, 'Tickets/t1'))),
+  );
+  await check(
+    'il demo NON legge la board di un altro demo',
+    assertFails(getDoc(doc(demo, 'Tickets/s2'))),
+  );
+  await check(
+    'il demo apre una scheda nella sua board',
+    assertSucceeds(
+      addDoc(collection(demo, 'Tickets'), {title: 'x', sandbox: 'demo-uid'}),
+    ),
+  );
+  await check(
+    'il demo NON apre schede fuori dalla sua board',
+    assertFails(addDoc(collection(demo, 'Tickets'), {title: 'x'})),
+  );
+  await check(
+    'il demo NON apre schede nella board di un altro',
+    assertFails(
+      addDoc(collection(demo, 'Tickets'), {title: 'x', sandbox: 'altro-demo-uid'}),
+    ),
+  );
+  await check(
+    'il demo sposta una sua scheda',
+    assertSucceeds(
+      setDoc(doc(demo, 'Tickets/s1'), {status: 'in_carico'}, {merge: true}),
+    ),
+  );
+  await check(
+    'il demo NON porta una scheda fuori dalla sua board',
+    assertFails(
+      setDoc(doc(demo, 'Tickets/s1'), {sandbox: 'altro-demo-uid'}, {merge: true}),
+    ),
+  );
+  await check(
+    'il demo commenta una sua scheda',
+    assertSucceeds(
+      addDoc(collection(demo, 'Tickets/s1/Comments'), {text: 'Provo'}),
+    ),
+  );
+  await check(
+    'il demo NON commenta le schede vere',
+    assertFails(addDoc(collection(demo, 'Tickets/t1/Comments'), {text: 'x'})),
+  );
+  await check(
+    'il demo NON registra allegati',
+    assertFails(
+      addDoc(collection(demo, 'Tickets/s1/Attachments'), {name: 'x.png'}),
+    ),
+  );
+  await check(
+    'il demo NON elimina la scheda di un altro',
+    assertFails(deleteDoc(doc(demo, 'Tickets/s2'))),
+  );
+  await check(
+    'il demo elimina una sua scheda',
+    assertSucceeds(deleteDoc(doc(demo, 'Tickets/s1'))),
   );
 
   console.log('\nEliminare: la scheda sì, i pezzi no (li toglie il trigger)');

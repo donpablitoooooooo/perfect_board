@@ -3,7 +3,7 @@ description: >-
   A kanban board for work cards (bugs, requests) on Firebase, built to be
   worked together with Claude Code: comments, attachments, annotated
   screenshots of the app itself, Markdown export and a CLI.
-version: 0.1.0
+version: 0.2.0
 homepage: https://perfect-board-3ce55.web.app
 repository: https://github.com/donpablitoooooooo/perfect_board
 issue_tracker: https://github.com/donpablitoooooooo/perfect_board/issues

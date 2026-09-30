@@ -1,0 +1,30 @@
+# Pubblica su pub.dev a ogni tag di versione (v0.2.0, v1.0.0…).
+#
+# pub.dev si fida di GitHub con un token OIDC, niente segreti nel repo: va
+# attivato una volta su pub.dev → perfect_board → Admin → Automated
+# publishing (repository donpablitoooooooo/perfect_board, tag `v{{version}}`).
+# Il tag deve coincidere con `version` in pubspec.yaml.
+name: Publish to pub.dev
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # il token OIDC per pub.dev
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      # Prepara il token OIDC che `pub publish` usa per autenticarsi.
+      - uses: dart-lang/setup-dart@v1
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+      - run: flutter pub publish --force
