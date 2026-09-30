@@ -168,6 +168,7 @@ class _TicketNewPageState extends State<TicketNewPage> {
         'checklist': _checklist.map((i) => i.toMap()).toList(),
         if (_dueAt != null) 'dueAt': Timestamp.fromDate(_dueAt!),
         'status': TicketStatus.nuova.key,
+        if (PerfectBoard.sandbox != null) 'sandbox': PerfectBoard.sandbox,
         'statusChangedAt': FieldValue.serverTimestamp(),
         // Stessa scala di createdAt: la scheda nasce in cima alla colonna.
         'order': DateTime.now().millisecondsSinceEpoch.toDouble(),

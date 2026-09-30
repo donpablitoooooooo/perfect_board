@@ -1,9 +1,30 @@
 {
-  "firestore": {"rules": "firestore.rules"},
-  "storage": {"rules": "storage.rules"},
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "functions": {
+    "source": "../functions",
+    "ignore": [
+      "node_modules",
+      ".git",
+      "*.log",
+      "ticket-files",
+      "serviceAccountKey.json",
+      "test_rules.js"
+    ]
+  },
   "emulators": {
-    "auth": {"port": 9099},
-    "firestore": {"port": 8080},
-    "storage": {"port": 9199}
+    "auth": {
+      "port": 9099
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "storage": {
+      "port": 9199
+    }
   }
 }

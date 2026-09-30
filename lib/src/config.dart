@@ -107,9 +107,14 @@ class PerfectBoard {
 
   static String get basePath => _basePath;
 
-  /// Account dimostrativo: i file (allegati e schermate) non vanno su
-  /// Storage ma restano in memoria finché la pagina è aperta, e le schede
-  /// non si eliminano. Le regole lo fanno rispettare comunque, con il claim
-  /// `demo`; questo serve alla UI per non provarci nemmeno.
+  /// Account dimostrativo (nell'esempio: un login anonimo). Ognuno ha la sua
+  /// board privata: le schede che apre portano `sandbox` = il suo uid e vede
+  /// solo quelle. I file (allegati e schermate) non vanno su Storage ma
+  /// restano in memoria finché la pagina è aperta. Le regole lo fanno
+  /// rispettare comunque; questo serve alla UI per chiedere e scrivere le
+  /// cose giuste.
   static bool get isDemo => _demo();
+
+  /// La board privata dell'account demo, `null` per gli altri.
+  static String? get sandbox => isDemo ? user.uid : null;
 }

@@ -48,15 +48,22 @@ class _TicketsPageState extends State<TicketsPage> {
   }
 
   void _listen() {
-    _sub = FirebaseFirestore.instance
-        .collection('Tickets')
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .listen((snap) {
+    // L'account demo legge solo la sua board privata (le regole non gli
+    // lasciano leggere altro, e una query più larga verrebbe rifiutata
+    // intera). Niente orderBy lì: servirebbe un indice composto, e le
+    // colonne si ordinano comunque da sole. Gli altri non vedono le board
+    // demo.
+    final sandbox = PerfectBoard.sandbox;
+    final tickets = FirebaseFirestore.instance.collection('Tickets');
+    final query = sandbox != null
+        ? tickets.where('sandbox', isEqualTo: sandbox)
+        : tickets.orderBy('createdAt', descending: true);
+    _sub = query.snapshots().listen((snap) {
       if (!mounted) return;
       setState(() {
         _loaded = true;
         _tickets = snap.docs
+            .where((d) => sandbox != null || d.data()['sandbox'] == null)
             .map((d) => Ticket.fromFirestore(d.id, d.data()))
             .toList();
       });

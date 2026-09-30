@@ -15,20 +15,14 @@ service firebase.storage {
                     request.auth.token.admin == true;
         }
 
-        // Account dimostrativo: niente file su Storage.
-        function isDemo() {
-            return "demo" in request.auth.token &&
-                    request.auth.token.demo == true;
-        }
-
         match /uploads/tickets/{allPaths=**} {
             allow read: if isAdmin();
             // Solo file nuovi: il nome porta un timestamp apposta, e un file
             // già caricato non si sovrascrive.
-            allow create: if isAdmin() && !isDemo() && resource == null &&
+            allow create: if isAdmin() && resource == null &&
                     request.resource.size < 15 * 1024 * 1024;
             allow update: if false;
-            allow delete: if isAdmin() && !isDemo();
+            allow delete: if isAdmin();
         }
     }
 }

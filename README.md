@@ -41,9 +41,9 @@ language.
 ## Try it
 
 **Live demo**: <https://perfect-board-3ce55.web.app>, press *Try the demo*
-(or sign in with `demo` / `demo`).
-The demo account can do everything except upload files (they stay in your
-browser until you reload) and delete cards.
+(or sign in with `demo` / `demo`). You get your own private board, which
+nobody else sees and which is wiped after a day; files stay in your browser
+until you reload.
 
 `example/` runs on the Firebase emulators or on your project: see
 [example/README.md](example/README.md).
@@ -170,8 +170,9 @@ generic icon.
 1. **Rules**: `firebase/firestore.rules` and `firebase/storage.rules`. If you
    already have rules, copy the `Tickets` block and `uploads/tickets` block into
    yours.
-2. **Functions**: deploy `functions/` (or re-export the four triggers from
-   `functions/index.js` in your own functions). Region defaults to
+2. **Functions**: deploy `functions/`
+   (`cd firebase && firebase deploy --only functions`), or re-export the
+   triggers from `functions/index.js` in your own functions. Region defaults to
    `europe-west1`; set `BOARD_FUNCTIONS_REGION` to match your database.
 3. **CORS** on the bucket, for PDF/text previews in the browser:
    `gsutil cors set firebase/cors.example.json gs://YOUR-BUCKET` (edit origins
@@ -188,27 +189,24 @@ Admins are users with the custom claim `admin: true` and a verified email.
 BOARD_PROJECT_ID=your-project-id node functions/set_admin.js you@example.com
 ```
 
-### Demo accounts
+### Demo mode
 
-To let people try the board without trusting them with your Storage, make
-an account a **demo** one:
-
-```bash
-BOARD_PROJECT_ID=your-project-id node functions/set_admin.js demo@example.com --demo
-```
-
-and tell the board who it is (the claim is also enforced by the rules):
+To let anyone try the board, turn on **Anonymous** sign-in and tell the
+board which users are demo ones:
 
 ```dart
 PerfectBoard.configure(
   // …
-  demo: () => myCachedClaims['demo'] == true,
+  demo: () => FirebaseAuth.instance.currentUser?.isAnonymous ?? false,
 );
 ```
 
-A demo account moves, edits and comments cards, but its attachments and
-screenshots stay in memory (thumbnails and previews included) and vanish
-on reload, and it cannot delete cards.
+Each demo user gets a **private board**: the cards it opens carry
+`sandbox` = its uid, it sees only those, and nobody else sees them (admins
+included). Its attachments and screenshots stay in memory, thumbnails and
+previews included, and vanish on reload. `firebase/firestore.rules`
+enforces all of it. Deploy `functions/` too: `demoCleanup` removes demo
+boards older than a day and stale anonymous users every night.
 
 ## CLI
 

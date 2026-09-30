@@ -1,11 +1,14 @@
 ## 0.2.0
 
-- **Demo accounts**: `PerfectBoard.configure(demo: ...)` and the `demo`
-  custom claim (`set_admin.js --demo`). A demo account uses the board but
-  its files (attachments and screenshots) stay in memory, in the browser,
-  and it cannot delete cards. The rules enforce both.
-- The example has a *Try the demo* button when `DEMO_EMAIL` and
-  `DEMO_PASSWORD` are defined, and accepts `demo` / `demo` as a shortcut.
+- **Demo mode**: `PerfectBoard.configure(demo: ...)`. Each demo user (in
+  the example: an anonymous sign-in) gets a private board: its cards carry
+  `sandbox` = its uid and it sees only those. Its files (attachments and
+  screenshots) stay in memory, in the browser, thumbnails and previews
+  included. The rules enforce both.
+- `demoCleanup` Cloud Function: every night removes demo boards older than
+  a day and stale anonymous users.
+- The example has a *Try the demo* button (or `demo` / `demo`) that starts
+  a private board with a few sample cards.
 
 ## 0.1.0
 

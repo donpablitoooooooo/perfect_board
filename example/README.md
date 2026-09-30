@@ -55,16 +55,14 @@ cd example && flutter run -d chrome
    `web_config.json` is ignored by git; the site ends up on
    `https://YOUR-PROJECT.web.app`. / `web_config.json` è ignorato da git; il
    sito finisce su `https://IL-TUO-PROGETTO.web.app`.
-6. Optional, a public demo account / Facoltativo, un account demo pubblico:
-   create the user in the console, then / crea l'utente dalla console, poi
+6. Optional, a public demo / Facoltativo, una demo pubblica: console →
+   Authentication → Sign-in method → enable **Anonymous** / attiva
+   **Anonimo**. The login page already has *Try the demo* / Il login ha già
+   *Try the demo*. For the nightly cleanup / Per la pulizia notturna:
    ```bash
-   BOARD_PROJECT_ID=YOUR-PROJECT node functions/set_admin.js demo@example.com --demo
+   cd functions && npm install && cd ../firebase
+   firebase deploy --only functions --project YOUR-PROJECT
    ```
-   put `DEMO_EMAIL` / `DEMO_PASSWORD` in `web_config.json` and run
-   `./deploy_web.sh` again: the login page gets a *Try the demo* button. /
-   metti `DEMO_EMAIL` / `DEMO_PASSWORD` in `web_config.json` e rilancia
-   `./deploy_web.sh`: il login mostra il bottone *Try the demo*.
-7. Optional / Facoltativo: deploy `functions/` for comment and attachment
-   counters (Blaze plan) / per i contatori di commenti e allegati (piano
-   Blaze): `firebase deploy --only functions --project YOUR-PROJECT` from a
-   `firebase.json` that points `functions` at `../functions`.
+7. Optional / Facoltativo: the same `functions/` deploy also keeps comment
+   and attachment counters (Blaze plan) / lo stesso deploy di `functions/`
+   tiene anche i contatori di commenti e allegati (piano Blaze).

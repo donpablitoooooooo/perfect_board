@@ -21,13 +21,9 @@ import 'package:perfect_board/perfect_board.dart';
 ///     --dart-define=FIREBASE_STORAGE_BUCKET=...
 const _projectId = String.fromEnvironment('FIREBASE_PROJECT_ID');
 
-/// Account demo facoltativo (vedi README): se c'è, il login mostra un
-/// bottone per entrare con quello.
-const _demoEmail = String.fromEnvironment('DEMO_EMAIL');
-const _demoPassword = String.fromEnvironment('DEMO_PASSWORD');
-
-/// Il claim `demo` dell'utente di adesso, letto a ogni nuovo token.
-bool _isDemo = false;
+/// Demo = login anonimo (va attivato in Authentication → Sign-in method).
+/// Ognuno ha la sua board privata, che `demoCleanup` smonta dopo un giorno.
+bool get _isDemo => FirebaseAuth.instance.currentUser?.isAnonymous ?? false;
 const _useEmulators = _projectId == '';
 
 Future<void> main() async {
@@ -65,17 +61,14 @@ Future<void> main() async {
     );
   }
 
-  FirebaseAuth.instance.idTokenChanges().listen((user) async {
-    final token = await user?.getIdTokenResult();
-    _isDemo = token?.claims?['demo'] == true;
-  });
-
   PerfectBoard.configure(
     currentUser: () {
       final user = FirebaseAuth.instance.currentUser;
       return BoardUser(
         uid: user?.uid ?? '',
-        name: user?.displayName ?? user?.email ?? 'Admin',
+        name: user?.displayName ??
+            user?.email ??
+            (user?.isAnonymous == true ? 'Demo' : 'Admin'),
         email: user?.email ?? '',
       );
     },
@@ -151,25 +144,30 @@ class _LoginPageState extends State<_LoginPage> {
   final _password = TextEditingController();
   String? _error;
 
-  Future<void> _signIn({String? email, String? password}) async {
-    setState(() => _error = null);
-    // "demo" / "demo" è una scorciatoia per l'account demo: Firebase vuole
-    // un'email vera e una password di almeno 6 caratteri.
-    if (_demoEmail != '' &&
-        _email.text.trim().toLowerCase() == 'demo' &&
+  Future<void> _signIn() async {
+    // "demo" / "demo" è la stessa cosa del bottone.
+    if (_email.text.trim().toLowerCase() == 'demo' &&
         _password.text == 'demo') {
-      email = _demoEmail;
-      password = _demoPassword;
+      return _tryDemo();
     }
+    setState(() => _error = null);
     try {
-      final credential =
-          await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email ?? _email.text.trim(),
-        password: password ?? _password.text,
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _email.text.trim(),
+        password: _password.text,
       );
-      // Il claim prima di entrare nella board, non un attimo dopo.
-      final token = await credential.user?.getIdTokenResult();
-      _isDemo = token?.claims?['demo'] == true;
+    } on FirebaseAuthException catch (e) {
+      setState(() => _error = e.message ?? e.code);
+    }
+  }
+
+  /// Login anonimo: un utente nuovo, quindi una board privata e vuota, che
+  /// si riempie con qualche scheda d'esempio.
+  Future<void> _tryDemo() async {
+    setState(() => _error = null);
+    try {
+      final credential = await FirebaseAuth.instance.signInAnonymously();
+      await _seedDemo(credential.user!.uid);
     } on FirebaseAuthException catch (e) {
       setState(() => _error = e.message ?? e.code);
     }
@@ -196,19 +194,16 @@ class _LoginPageState extends State<_LoginPage> {
               ),
               const SizedBox(height: 24),
               FilledButton(onPressed: _signIn, child: const Text('Sign in')),
-              if (_demoEmail != '') ...[
-                const SizedBox(height: 12),
-                OutlinedButton(
-                  onPressed: () =>
-                      _signIn(email: _demoEmail, password: _demoPassword),
-                  child: const Text('Try the demo'),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'or sign in with demo / demo',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: _tryDemo,
+                child: const Text('Try the demo'),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'or sign in with demo / demo',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
               if (_error != null) ...[
                 const SizedBox(height: 16),
                 Text(_error!, style: const TextStyle(color: Colors.redAccent)),
@@ -219,6 +214,42 @@ class _LoginPageState extends State<_LoginPage> {
       ),
     );
   }
+}
+
+/// Qualche scheda per non partire da una board vuota, nella board privata
+/// del demo (`sandbox`, vedi firestore.rules).
+Future<void> _seedDemo(String uid) async {
+  final tickets = FirebaseFirestore.instance.collection('Tickets');
+  final now = DateTime.now().millisecondsSinceEpoch.toDouble();
+  final samples = [
+    ('The checkout button does nothing on Safari',
+        'Tap "Pay", nothing happens. Chrome is fine.', 'nuova', ['bug']),
+    ('Add a date filter to the orders list',
+        'We need to see last week\'s orders only.', 'in_carico', ['backoffice']),
+    ('Which logo goes on the login page?',
+        'The old one or the new one?', 'da_chiarire', ['app']),
+    ('Typo in the welcome email', 'It says "Welcom".', 'pronta', ['bug']),
+  ];
+  final batch = FirebaseFirestore.instance.batch();
+  for (var i = 0; i < samples.length; i++) {
+    final (title, body, status, labels) = samples[i];
+    batch.set(tickets.doc(), {
+      'title': title,
+      'body': body,
+      'status': status,
+      'labels': labels,
+      'refs': [],
+      'refKeys': [],
+      'checklist': [],
+      'sandbox': uid,
+      'order': now - i,
+      'statusChangedAt': FieldValue.serverTimestamp(),
+      'createdBy': {'uid': uid, 'name': 'Demo', 'email': '', 'role': 'admin'},
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+  await batch.commit();
 }
 
 /// Una sorgente di collegamenti senza database: le "pagine" di un'app
