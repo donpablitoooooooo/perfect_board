@@ -44,6 +44,12 @@ async function main() {
   }
 
   const key = credentials();
+  if (!key && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    fail('Nessuna chiave: salva la chiave del service account come ' +
+      'functions/serviceAccountKey.json (console Firebase → Impostazioni ' +
+      'progetto → Account di servizio → Genera nuova chiave privata), ' +
+      'oppure usa BOARD_SERVICE_ACCOUNT o GOOGLE_APPLICATION_CREDENTIALS.');
+  }
   if (key && key.project_id !== projectId) {
     fail(`La chiave è del progetto "${key.project_id}", non di ${projectId}.`);
   }
@@ -52,7 +58,12 @@ async function main() {
     ...(key ? {credential: admin.credential.cert(key)} : {}),
   });
 
-  const user = await admin.auth().getUserByEmail(email).catch(() => null);
+  // Solo "utente non trovato" vuol dire che manca: gli altri errori
+  // (credenziali, rete) vanno mostrati per quello che sono.
+  const user = await admin.auth().getUserByEmail(email).catch((e) => {
+    if (e.code === 'auth/user-not-found') return null;
+    throw e;
+  });
   if (!user) fail(`Nessun utente con email ${email}: crealo prima dalla console.`);
 
   const claims = {...(user.customClaims || {})};
