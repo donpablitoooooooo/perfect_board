@@ -22,8 +22,8 @@ service cloud.firestore {
 
         // Account demo = login anonimo. Ha una board privata: vede e tocca
         // solo le schede con `sandbox` uguale al suo uid, e non carica file
-        // (li tiene in memoria nel browser). Le board demo le smonta ogni
-        // notte `demoCleanup` (functions/demo_cleanup.js).
+        // (li tiene in memoria nel browser). Pulizia notturna facoltativa:
+        // `demoCleanup` (functions/demo_cleanup.js).
         function isDemo() {
             return request.auth != null &&
                     request.auth.token.firebase.sign_in_provider == 'anonymous';

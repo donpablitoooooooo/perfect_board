@@ -205,8 +205,9 @@ Each demo user gets a **private board**: the cards it opens carry
 `sandbox` = its uid, it sees only those, and nobody else sees them (admins
 included). Its attachments and screenshots stay in memory, thumbnails and
 previews included, and vanish on reload. `firebase/firestore.rules`
-enforces all of it. Deploy `functions/` too: `demoCleanup` removes demo
-boards older than a day and stale anonymous users every night.
+enforces all of it. Demo boards stay until you remove them; to have them
+cleaned every night (boards older than a day and stale anonymous users),
+uncomment `demoCleanup` in `functions/index.js` and deploy `functions/`.
 
 ## CLI
 

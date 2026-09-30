@@ -17,5 +17,6 @@ exports.ticketDeleted = ticketEvents.ticketDeleted;
 exports.ticketAttachmentAdded = ticketEvents.ticketAttachmentAdded;
 exports.ticketAttachmentRemoved = ticketEvents.ticketAttachmentRemoved;
 
-// Facoltativa: solo se pubblichi una demo con login anonimo.
-exports.demoCleanup = require('./demo_cleanup').demoCleanup;
+// Facoltativa, spenta: pulizia notturna delle board demo (login anonimo).
+// Per accenderla togli il commento alla riga sotto e rifai il deploy.
+// exports.demoCleanup = require('./demo_cleanup').demoCleanup;

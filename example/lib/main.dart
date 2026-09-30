@@ -22,7 +22,7 @@ import 'package:perfect_board/perfect_board.dart';
 const _projectId = String.fromEnvironment('FIREBASE_PROJECT_ID');
 
 /// Demo = login anonimo (va attivato in Authentication → Sign-in method).
-/// Ognuno ha la sua board privata, che `demoCleanup` smonta dopo un giorno.
+/// Ognuno ha la sua board privata, che vede solo lui.
 bool get _isDemo => FirebaseAuth.instance.currentUser?.isAnonymous ?? false;
 const _useEmulators = _projectId == '';
 

@@ -58,11 +58,13 @@ cd example && flutter run -d chrome
 6. Optional, a public demo / Facoltativo, una demo pubblica: console →
    Authentication → Sign-in method → enable **Anonymous** / attiva
    **Anonimo**. The login page already has *Try the demo* / Il login ha già
-   *Try the demo*. For the nightly cleanup / Per la pulizia notturna:
+   *Try the demo*. Nightly cleanup of demo boards: optional, see
+   `functions/index.js` / Pulizia notturna delle board demo: facoltativa,
+   vedi `functions/index.js`.
+7. Optional / Facoltativo: comment and attachment counters on the cards
+   (Blaze plan) / i contatori di commenti e allegati sulle card (piano
+   Blaze):
    ```bash
    cd functions && npm install && cd ../firebase
    firebase deploy --only functions --project YOUR-PROJECT
    ```
-7. Optional / Facoltativo: the same `functions/` deploy also keeps comment
-   and attachment counters (Blaze plan) / lo stesso deploy di `functions/`
-   tiene anche i contatori di commenti e allegati (piano Blaze).

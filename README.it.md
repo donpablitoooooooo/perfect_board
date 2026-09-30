@@ -210,9 +210,10 @@ Ogni utente demo ha una **board privata**: le schede che apre portano
 `sandbox` = il suo uid, vede solo quelle e nessun altro le vede (nemmeno
 gli admin). Allegati e schermate restano in memoria, miniature e anteprime
 comprese, e spariscono ricaricando. Lo fa rispettare
-`firebase/firestore.rules`. Deploya anche `functions/`: ogni notte
-`demoCleanup` toglie le board demo più vecchie di un giorno e gli utenti
-anonimi fermi.
+`firebase/firestore.rules`. Le board demo restano finché non le togli tu;
+per farle pulire ogni notte (board più vecchie di un giorno e utenti
+anonimi fermi) togli il commento a `demoCleanup` in `functions/index.js` e
+deploya `functions/`.
 
 ## CLI
 
