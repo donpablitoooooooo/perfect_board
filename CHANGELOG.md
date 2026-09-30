@@ -1,3 +1,11 @@
+## 0.2.1
+
+- Accepts the latest `go_router` (18), `cached_network_image` (4) and
+  `file_saver` (0.6) while still working with the previous majors.
+- `cached_network_image` needs at least 3.4.1 (3.2.0 no longer builds with
+  current Flutter).
+- Shorter package description.
+
 ## 0.2.0
 
 - **Demo mode**: `PerfectBoard.configure(demo: ...)`. Each demo user (in
