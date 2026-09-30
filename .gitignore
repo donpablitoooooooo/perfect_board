@@ -8,3 +8,6 @@ pubspec.lock
 functions/node_modules/
 functions/serviceAccountKey.json
 functions/ticket-files/
+*-debug.log
+firebase/.firebase/
+example/build/
