@@ -40,8 +40,8 @@ language.
 
 ## Try it
 
-**Live demo**: <https://perfect-board-3ce55.web.app>, press *Try the demo*
-(or sign in with `demo` / `demo`). You get your own private board, which
+**Live demo**: <https://perfect-board-3ce55.web.app>, press *Try the demo*.
+You get your own private board, which
 nobody else sees and which is wiped after a day; files stay in your browser
 until you reload.
 

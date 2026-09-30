@@ -8,7 +8,7 @@
 - Optional `demoCleanup` Cloud Function (off by default, see
   `functions/index.js`): every night removes demo boards older than a day
   and stale anonymous users.
-- The example has a *Try the demo* button (or `demo` / `demo`) that starts
+- The example has a *Try the demo* button that starts
   a private board with a few sample cards.
 
 ## 0.1.0

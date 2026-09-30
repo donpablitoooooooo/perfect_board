@@ -145,11 +145,6 @@ class _LoginPageState extends State<_LoginPage> {
   String? _error;
 
   Future<void> _signIn() async {
-    // "demo" / "demo" è la stessa cosa del bottone.
-    if (_email.text.trim().toLowerCase() == 'demo' &&
-        _password.text == 'demo') {
-      return _tryDemo();
-    }
     setState(() => _error = null);
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
@@ -198,11 +193,6 @@ class _LoginPageState extends State<_LoginPage> {
               OutlinedButton(
                 onPressed: _tryDemo,
                 child: const Text('Try the demo'),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'or sign in with demo / demo',
-                style: Theme.of(context).textTheme.bodySmall,
               ),
               if (_error != null) ...[
                 const SizedBox(height: 16),

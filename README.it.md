@@ -44,7 +44,7 @@ lingua.
 ## Provarla
 
 **Demo online**: <https://perfect-board-3ce55.web.app>, premi *Try the
-demo* (o entra con `demo` / `demo`). Hai una board tutta tua, che nessun
+demo*. Hai una board tutta tua, che nessun
 altro vede e che si cancella dopo un giorno; i file restano nel tuo browser
 finché non ricarichi.
 
