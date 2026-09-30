@@ -1,6 +1,6 @@
 import 'package:perfect_board/src/models/ticket.dart';
 import 'package:perfect_board/src/widgets/ticket_attachments.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:perfect_board/src/board_file.dart';
 import 'package:perfect_board/src/theme.dart';
 import 'package:perfect_board/src/widgets/ticket_ui.dart';
 import 'package:flutter/material.dart';
@@ -139,7 +139,7 @@ class TicketDueField extends StatelessWidget {
 
 /// Un file scelto mentre apri la scheda, prima che la scheda esista.
 class TicketPickedFileChip extends StatelessWidget {
-  final PlatformFile file;
+  final BoardFile file;
   final VoidCallback onRemove;
 
   const TicketPickedFileChip(
@@ -162,7 +162,7 @@ class TicketPickedFileChip extends StatelessWidget {
       size: readable,
       onRemove: onRemove,
       removeTooltip: bt('remove'),
-      preview: type.startsWith('image/') && bytes != null
+      preview: type.startsWith('image/')
           ? Image.memory(
               bytes,
               fit: BoxFit.cover,

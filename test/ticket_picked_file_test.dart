@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:perfect_board/src/widgets/ticket_fields.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:perfect_board/src/board_file.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -15,21 +15,21 @@ final _png = Uint8List.fromList([
   0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82,
 ]);
 
-Widget _wrap(PlatformFile file) => MaterialApp(
+Widget _wrap(BoardFile file) => MaterialApp(
     home: Scaffold(
         body: TicketPickedFileChip(file: file, onRemove: () {})));
 
 void main() {
   testWidgets('un\'immagine in attesa ha già la miniatura', (tester) async {
-    await tester.pumpWidget(_wrap(PlatformFile(
-        name: 'screenshot_1.png', size: _png.length, bytes: _png)));
+    await tester.pumpWidget(_wrap(BoardFile(
+        name: 'screenshot_1.png', bytes: _png)));
     expect(find.byType(Image), findsOneWidget);
     expect(find.text('screenshot_1.png'), findsOneWidget);
   });
 
   testWidgets('un file che non è un\'immagine ha l\'icona', (tester) async {
-    await tester.pumpWidget(_wrap(PlatformFile(
-        name: 'log.txt', size: 3, bytes: Uint8List.fromList([1, 2, 3]))));
+    await tester.pumpWidget(_wrap(BoardFile(
+        name: 'log.txt', bytes: Uint8List.fromList([1, 2, 3]))));
     expect(find.byType(Image), findsNothing);
     expect(find.byIcon(Icons.insert_drive_file_outlined), findsOneWidget);
   });

@@ -2,7 +2,7 @@ name: perfect_board
 description: >-
   Kanban board for bugs and requests on Firebase, with annotated in-app
   screenshots, built to be worked together with Claude Code.
-version: 0.2.1
+version: 0.3.0
 homepage: https://perfect-board-3ce55.web.app
 repository: https://github.com/donpablitoooooooo/perfect_board
 issue_tracker: https://github.com/donpablitoooooooo/perfect_board/issues
@@ -14,15 +14,15 @@ topics:
   - claude
 
 environment:
-  sdk: '>=3.6.0 <4.0.0'
-  flutter: '>=3.27.0'
+  sdk: '>=3.10.0 <4.0.0'
+  flutter: '>=3.38.0'
 
 dependencies:
   flutter:
     sdk: flutter
   cached_network_image: '>=3.4.1 <5.0.0'
   cloud_firestore: ^6.1.1
-  file_picker: ^10.1.9
+  file_picker: ^13.1.0
   file_saver: '>=0.3.0 <0.7.0'
   firebase_storage: ^13.0.5
   gap: ^3.0.1

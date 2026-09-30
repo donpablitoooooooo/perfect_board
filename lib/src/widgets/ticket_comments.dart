@@ -9,7 +9,7 @@ import 'package:perfect_board/src/widgets/ticket_attachments.dart';
 import 'package:perfect_board/src/widgets/ticket_fields.dart';
 import 'package:perfect_board/src/widgets/ticket_screenshot.dart';
 import 'package:perfect_board/src/widgets/ticket_ui.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:perfect_board/src/board_file.dart';
 import 'package:flutter/material.dart';
 import 'package:perfect_board/src/l10n.dart';
 import 'package:gap/gap.dart';
@@ -30,7 +30,7 @@ import 'package:gap/gap.dart';
 /// si smonta mentre si naviga, e al ritorno testo e file devono esserci.
 class _CommentDraft {
   final String text;
-  final List<PlatformFile> files;
+  final List<BoardFile> files;
 
   const _CommentDraft(this.text, this.files);
 }
@@ -55,7 +55,7 @@ class TicketComments extends StatefulWidget {
 
 class _TicketCommentsState extends State<TicketComments> {
   final TextEditingController _controller = TextEditingController();
-  final List<PlatformFile> _files = [];
+  final List<BoardFile> _files = [];
   bool _sending = false;
 
   String get _draftKey => 'comment:${widget.ticketId}';
@@ -111,23 +111,11 @@ class _TicketCommentsState extends State<TicketComments> {
           .collection('Attachments');
 
   Future<void> _pickFiles() async {
-    final picked = await FilePicker.platform.pickFiles(
-      withData: true,
-      allowMultiple: true,
-    );
-    if (picked == null || picked.files.isEmpty) return;
-
-    final tooBig = <String>[];
-    setState(() {
-      for (final file in picked.files) {
-        if ((file.bytes?.length ?? 0) > kTicketAttachmentMaxBytes) {
-          tooBig.add(file.name);
-        } else {
-          _files.add(file);
-        }
-      }
-    });
-    if (tooBig.isNotEmpty && mounted) {
+    final (:files, :tooBig) =
+        await pickBoardFiles(maxBytes: kTicketAttachmentMaxBytes);
+    if (!mounted) return;
+    if (files.isNotEmpty) setState(() => _files.addAll(files));
+    if (tooBig.isNotEmpty) {
       ticketToast(
         context,
         bt('skippedTooBig', {'files': tooBig.join(', ')}),

@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:perfect_board/src/theme.dart';
 import 'package:perfect_board/src/widgets/ticket_attachments.dart';
 import 'package:perfect_board/src/widgets/ticket_ui.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:perfect_board/src/board_file.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:perfect_board/src/l10n.dart';
@@ -70,19 +70,19 @@ class TicketScreenshot {
     if (isActiveFor(draftKey)) session.value = null;
   }
 
-  static final Map<String, List<PlatformFile>> _shots = {};
+  static final Map<String, List<BoardFile>> _shots = {};
 
   /// Scatta ogni volta che una schermata va in una bozza: la pagina, se è
   /// ancora montata (si è scattato senza cambiare pagina), la riprende subito.
   static final ValueNotifier<int> shotsChanged = ValueNotifier(0);
 
-  static void _addShot(String draftKey, PlatformFile file) {
+  static void _addShot(String draftKey, BoardFile file) {
     _shots.putIfAbsent(draftKey, () => []).add(file);
     shotsChanged.value++;
   }
 
   /// Le schermate di [draftKey] non ancora riprese; le toglie dalla memoria.
-  static List<PlatformFile> takeShots(String draftKey) =>
+  static List<BoardFile> takeShots(String draftKey) =>
       _shots.remove(draftKey) ?? const [];
 }
 
@@ -193,7 +193,7 @@ class _TicketScreenshotHostState extends State<TicketScreenshotHost> {
 
       final name =
           'screenshot_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.png';
-      final file = PlatformFile(name: name, size: bytes.length, bytes: bytes);
+      final file = BoardFile(name: name, bytes: bytes);
       if (target.ticketId != null) {
         await uploadTicketAttachment(ticketId: target.ticketId!, file: file);
       } else {

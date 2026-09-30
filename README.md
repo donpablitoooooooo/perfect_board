@@ -50,7 +50,7 @@ until you reload.
 
 ## Requirements
 
-- Flutter ≥ 3.27, `go_router` for navigation.
+- Flutter ≥ 3.38 (iOS ≥ 14), `go_router` for navigation.
 - Firebase: Auth, Firestore, Storage, Cloud Functions (for counters/cleanup).
 - Admins are users with the custom claim `admin: true` and a verified email.
 

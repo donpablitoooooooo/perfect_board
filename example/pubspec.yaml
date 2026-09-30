@@ -3,7 +3,7 @@ description: Esempio minimo di perfect_board sugli emulatori Firebase.
 publish_to: none
 
 environment:
-  sdk: '>=3.6.0 <4.0.0'
+  sdk: '>=3.10.0 <4.0.0'
 
 dependencies:
   flutter:
