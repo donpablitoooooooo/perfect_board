@@ -2,6 +2,7 @@ import 'package:perfect_board/src/models/ticket.dart';
 import 'package:perfect_board/src/widgets/ticket_attachments.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:perfect_board/src/theme.dart';
+import 'package:perfect_board/src/widgets/ticket_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:perfect_board/src/l10n.dart';
 
@@ -45,7 +46,8 @@ class TicketField extends StatelessWidget {
               padding: EdgeInsets.only(top: alignTop ? 8 : 0),
               child: Text(
                 label,
-                style: const TextStyle(color: subtitleColor, fontSize: 13),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ),
           ),
@@ -78,10 +80,7 @@ class TicketLabelsField extends StatelessWidget {
           FilterChip(
             label: Text(label.label),
             selected: selected.contains(label),
-            selectedColor: label.color.withAlpha(40),
-            side: BorderSide(
-              color: selected.contains(label) ? label.color : subtitleColor,
-            ),
+            selectedColor: context.board.label(label).withAlpha(50),
             onSelected: (on) => onToggle(label, on),
           ),
       ],
@@ -121,23 +120,18 @@ class TicketDueField extends StatelessWidget {
     final value = dueAt;
     return Row(
       children: [
-        OutlinedButton.icon(
-          icon: const Icon(Icons.event_outlined, size: 16),
+        // InputChip: si tocca per scegliere la data, la ✕ la toglie.
+        InputChip(
+          avatar: Icon(Icons.event_outlined,
+              color: overdue ? context.board.error : null),
           label: Text(
             value != null ? dateFormat.format(value) : bt('dueNone'),
-            style: TextStyle(
-              color: overdue ? Colors.redAccent : tertiaryColor,
-              fontSize: 13,
-            ),
+            style: overdue ? TextStyle(color: context.board.error) : null,
           ),
           onPressed: () => _pick(context),
+          onDeleted: value != null ? onClear : null,
+          deleteButtonTooltipMessage: bt('dueCleared'),
         ),
-        if (value != null)
-          IconButton(
-            tooltip: bt('dueCleared'),
-            icon: const Icon(Icons.close, size: 16, color: subtitleColor),
-            onPressed: onClear,
-          ),
       ],
     );
   }
@@ -163,61 +157,19 @@ class TicketPickedFileChip extends StatelessWidget {
     // Stesso riquadro di un allegato già caricato (`TicketAttachmentTile`):
     // la miniatura c'è da subito, non solo dopo l'invio. L'immagine viene
     // dai byte già in memoria, ridotta alla misura del riquadro.
-    return SizedBox(
-      width: 150,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 96,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: pureBlack,
-              border: Border.all(color: cardColor),
-            ),
-            child: type.startsWith('image/') && bytes != null
-                ? Image.memory(
-                    bytes,
-                    fit: BoxFit.cover,
-                    cacheWidth: 300,
-                    errorBuilder: (_, __, ___) => const Icon(
-                      Icons.broken_image_outlined,
-                      color: subtitleColor,
-                    ),
-                  )
-                : Icon(
-                    type.startsWith('video/')
-                        ? Icons.movie_outlined
-                        : Icons.insert_drive_file_outlined,
-                    color: subtitleColor,
-                    size: 32),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            file.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: lightTextColor, fontSize: 12),
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  readable,
-                  style: const TextStyle(color: subtitleColor, fontSize: 11),
-                ),
-              ),
-              InkWell(
-                onTap: onRemove,
-                child: const Padding(
-                  padding: EdgeInsets.all(4),
-                  child: Icon(Icons.close, size: 14, color: subtitleColor),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+    return TicketFileCard(
+      name: file.name,
+      size: readable,
+      onRemove: onRemove,
+      removeTooltip: bt('remove'),
+      preview: type.startsWith('image/') && bytes != null
+          ? Image.memory(
+              bytes,
+              fit: BoxFit.cover,
+              cacheWidth: 320,
+              errorBuilder: (_, __, ___) => TicketFileIcon(type),
+            )
+          : TicketFileIcon(type),
     );
   }
 }

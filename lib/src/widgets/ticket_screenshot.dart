@@ -179,6 +179,7 @@ class _TicketScreenshotHostState extends State<TicketScreenshotHost> {
     final frame = _frame;
     if (_busy || frame == null) return;
     final pixelRatio = math.min(MediaQuery.of(context).devicePixelRatio, 2.0);
+    final inkColor = context.board.error;
     setState(() => _busy = true);
     try {
       // La cornice sta fuori dal boundary: basta lasciar finire il frame in
@@ -187,7 +188,8 @@ class _TicketScreenshotHostState extends State<TicketScreenshotHost> {
       final boundary = _boundaryKey.currentContext?.findRenderObject()
           as RenderRepaintBoundary?;
       if (boundary == null) throw StateError('No boundary');
-      final bytes = await _capture(boundary, frame, pixelRatio, _strokes);
+      final bytes = await _capture(
+          boundary, frame, pixelRatio, _strokes, inkColor);
 
       final name =
           'screenshot_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.png';
@@ -219,6 +221,7 @@ class _TicketScreenshotHostState extends State<TicketScreenshotHost> {
     Rect frame,
     double pixelRatio,
     List<List<Offset>> strokes,
+    Color ink,
   ) async {
     final full = await boundary.toImage(pixelRatio: pixelRatio);
     try {
@@ -236,7 +239,7 @@ class _TicketScreenshotHostState extends State<TicketScreenshotHost> {
       canvas
         ..scale(pixelRatio)
         ..translate(-frame.left, -frame.top);
-      _paintStrokes(canvas, strokes);
+      _paintStrokes(canvas, strokes, ink);
       final picture = recorder.endRecording();
       final cropped =
           await picture.toImage(src.width.round(), src.height.round());
@@ -359,7 +362,15 @@ class _TicketScreenshotHostState extends State<TicketScreenshotHost> {
     return [
       Positioned.fill(
         child: IgnorePointer(
-          child: CustomPaint(painter: _FramePainter(frame, _strokes)),
+          child: CustomPaint(
+            painter: _FramePainter(
+              frame,
+              _strokes,
+              accent: context.board.accent,
+              ink: context.board.error,
+              scrim: context.board.scrim,
+            ),
+          ),
         ),
       ),
       // Dentro la cornice: trascinando si disegna. È "translucent", quindi
@@ -426,21 +437,17 @@ class _TicketScreenshotHostState extends State<TicketScreenshotHost> {
   }
 
   Widget _buildBar(TicketScreenshotTarget target) {
-    return Material(
-      color: softBlack,
-      elevation: 8,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: tertiaryColor),
-        ),
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 6,
+      color: theme.colorScheme.surfaceContainerHigh,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 10, 10, 10),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.photo_camera, size: 18, color: tertiaryColor),
-            const Gap(10),
+            Icon(Icons.photo_camera_outlined, color: theme.colorScheme.primary),
+            const Gap(12),
             Flexible(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 360),
@@ -451,42 +458,33 @@ class _TicketScreenshotHostState extends State<TicketScreenshotHost> {
                     Text(
                       bt('screenshotFor', {'title': target.title}),
                       overflow: TextOverflow.ellipsis,
-                      style:
-                          const TextStyle(color: lightTextColor, fontSize: 13),
+                      style: theme.textTheme.titleSmall,
                     ),
                     Text(
                       bt('screenshotFrame'),
                       overflow: TextOverflow.ellipsis,
-                      style:
-                          const TextStyle(color: subtitleColor, fontSize: 12),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
               ),
             ),
             const Gap(16),
-            ElevatedButton.icon(
+            FilledButton.icon(
               onPressed: _busy ? null : () => _take(target),
-              icon: const Icon(Icons.photo_camera, size: 16),
-              label: Text(_busy
-                  ? bt('uploading')
-                  : bt('screenshotTake')),
+              icon: const Icon(Icons.photo_camera),
+              label: Text(_busy ? bt('uploading') : bt('screenshotTake')),
             ),
             const Gap(8),
             if (_strokes.isNotEmpty)
               TextButton(
                 onPressed: _busy ? null : () => setState(_strokes.clear),
-                child: Text(
-                  bt('screenshotClear'),
-                  style: const TextStyle(color: tertiaryColor, fontSize: 13),
-                ),
+                child: Text(bt('screenshotClear')),
               ),
             TextButton(
               onPressed: _busy ? null : () => _backToTicket(target),
-              child: Text(
-                bt('screenshotBack'),
-                style: const TextStyle(color: tertiaryColor, fontSize: 13),
-              ),
+              child: Text(bt('screenshotBack')),
             ),
           ],
         ),
@@ -497,9 +495,9 @@ class _TicketScreenshotHostState extends State<TicketScreenshotHost> {
 
 /// La cornice di mira: velo scuro fuori, bordo sottile e angoli spessi.
 /// I tratti a mano libera: rossi, spessi abbastanza da vedersi nel PNG.
-void _paintStrokes(Canvas canvas, List<List<Offset>> strokes) {
+void _paintStrokes(Canvas canvas, List<List<Offset>> strokes, Color ink) {
   final paint = Paint()
-    ..color = errorColor
+    ..color = ink
     ..style = PaintingStyle.stroke
     ..strokeWidth = 3
     ..strokeCap = StrokeCap.round
@@ -507,7 +505,7 @@ void _paintStrokes(Canvas canvas, List<List<Offset>> strokes) {
   for (final stroke in strokes) {
     if (stroke.length == 1) {
       canvas.drawCircle(
-          stroke.first, 1.5, Paint()..color = errorColor);
+          stroke.first, 1.5, Paint()..color = ink);
       continue;
     }
     final path = Path()..moveTo(stroke.first.dx, stroke.first.dy);
@@ -521,14 +519,23 @@ void _paintStrokes(Canvas canvas, List<List<Offset>> strokes) {
 class _FramePainter extends CustomPainter {
   final Rect frame;
   final List<List<Offset>> strokes;
+  final Color accent;
+  final Color ink;
+  final Color scrim;
 
-  const _FramePainter(this.frame, this.strokes);
+  const _FramePainter(
+    this.frame,
+    this.strokes, {
+    required this.accent,
+    required this.ink,
+    required this.scrim,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     // Il velo sono quattro fasce attorno alla cornice. Con una differenza
     // di tracciati (Path.combine) CanvasKit a volte scuriva anche l'interno.
-    final veil = Paint()..color = Colors.black.withValues(alpha: 0.35);
+    final veil = Paint()..color = scrim.withValues(alpha: 0.35);
     canvas
       ..drawRect(Rect.fromLTRB(0, 0, size.width, frame.top), veil)
       ..drawRect(Rect.fromLTRB(0, frame.bottom, size.width, size.height), veil)
@@ -539,13 +546,13 @@ class _FramePainter extends CustomPainter {
     canvas.drawRect(
       frame,
       Paint()
-        ..color = tertiaryColor
+        ..color = accent
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.5,
     );
     const arm = 28.0;
     final paint = Paint()
-      ..color = tertiaryColor
+      ..color = accent
       ..style = PaintingStyle.stroke
       ..strokeWidth = 5
       ..strokeCap = StrokeCap.round;
@@ -564,7 +571,7 @@ class _FramePainter extends CustomPainter {
         paint,
       );
     }
-    _paintStrokes(canvas, strokes);
+    _paintStrokes(canvas, strokes, ink);
   }
 
   // I tratti crescono sul posto (stessa lista): si ridisegna sempre, costa

@@ -105,11 +105,12 @@ class ExampleApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'perfect_board',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1B4183),
-          brightness: Brightness.dark,
-        ),
+      // La board prende colori e forme dal tema Material 3 dell'app: prova
+      // a cambiare il colore seme o a passare al tema scuro del sistema.
+      theme: ThemeData(colorSchemeSeed: Colors.deepPurple),
+      darkTheme: ThemeData(
+        colorSchemeSeed: Colors.deepPurple,
+        brightness: Brightness.dark,
       ),
       routerConfig: _router,
       builder: (context, child) => TicketScreenshotHost(

@@ -3,7 +3,6 @@ import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:perfect_board/src/models/ticket.dart';
-import 'package:perfect_board/src/theme.dart';
 import 'package:perfect_board/src/widgets/ticket_ui.dart';
 import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
@@ -154,25 +153,23 @@ Future<void> showTicketExport(BuildContext context, Ticket ticket) async {
           children: [
             Text(
               bt('exportHint'),
-              style: const TextStyle(color: subtitleColor, fontSize: 12),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const Gap(14),
             Expanded(
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: pureBlack,
-                  border: Border.all(color: cardColor),
-                ),
+              child: Card.outlined(
+                margin: EdgeInsets.zero,
                 child: SingleChildScrollView(
-                  child: SelectableText(
-                    markdown,
-                    style: const TextStyle(
-                      color: lightTextColor,
-                      fontSize: 12,
-                      height: 1.5,
-                      fontFamily: 'monospace',
+                  padding: const EdgeInsets.all(14),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: SelectableText(
+                      markdown,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(fontFamily: 'monospace'),
                     ),
                   ),
                 ),
@@ -187,7 +184,7 @@ Future<void> showTicketExport(BuildContext context, Ticket ticket) async {
           child: Text(bt('cancel')),
         ),
         TextButton.icon(
-          icon: const Icon(Icons.download_outlined, size: 16),
+          icon: const Icon(Icons.download_outlined),
           label: Text(bt('exportDownload')),
           onPressed: () async {
             // Estensione nel nome e MimeType.other: è la firma che usano
@@ -201,11 +198,8 @@ Future<void> showTicketExport(BuildContext context, Ticket ticket) async {
             if (dialogContext.mounted) Navigator.pop(dialogContext);
           },
         ),
-        ElevatedButton.icon(
-          style: ButtonStyle(
-            elevation: WidgetStateProperty.all(0),
-          ),
-          icon: const Icon(Icons.copy, size: 16),
+        FilledButton.icon(
+          icon: const Icon(Icons.copy),
           label: Text(bt('exportCopy')),
           onPressed: () {
             Clipboard.setData(ClipboardData(text: markdown));

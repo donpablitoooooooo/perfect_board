@@ -3,7 +3,6 @@ import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:perfect_board/src/models/ticket.dart';
 import 'package:perfect_board/src/config.dart';
-import 'package:perfect_board/src/theme.dart';
 import 'package:perfect_board/src/widgets/ticket_attachments.dart';
 import 'package:perfect_board/src/widgets/ticket_checklist.dart';
 import 'package:perfect_board/src/widgets/ticket_fields.dart';
@@ -216,63 +215,30 @@ class _TicketNewPageState extends State<TicketNewPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildHeader(),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Center(
-                  child: SizedBox(width: 860, child: _buildForm()),
-                ),
-              ),
-            ),
-          ],
+      appBar: AppBar(
+        leading: BackButton(onPressed: _leave),
+        title: Text(bt('newCard')),
+        actions: [
+          TextButton(onPressed: _leave, child: Text(bt('cancel'))),
+          const Gap(8),
+          FilledButton(
+            onPressed: _canCreate && !_saving ? _create : null,
+            child: Text(_saving ? bt('sending') : bt('create')),
+          ),
+          const Gap(16),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: SizedBox(width: 860, child: _buildForm()),
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(8, 12, 24, 12),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: cardColor)),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: tertiaryColor),
-            onPressed: _leave,
-          ),
-          const Gap(8),
-          Expanded(
-            child: Text(
-              bt('newCard'),
-              style: const TextStyle(
-                  color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-          ),
-          TextButton(
-            onPressed: _leave,
-            child: Text(bt('cancel')),
-          ),
-          const Gap(8),
-          ElevatedButton(
-            style: ButtonStyle(
-              elevation: WidgetStateProperty.all(0),
-            ),
-            onPressed: _canCreate && !_saving ? _create : null,
-            child: Text(_saving ? bt('sending') : bt('create')),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildForm() {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -300,13 +266,9 @@ class _TicketNewPageState extends State<TicketNewPage> {
         const Divider(),
         const Gap(4),
         Text(
-          bt('optional').toUpperCase(),
-          style: const TextStyle(
-            color: subtitleColor,
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1,
-          ),
+          bt('optional'),
+          style: theme.textTheme.titleSmall
+              ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
         ),
         const Gap(4),
 
@@ -348,12 +310,8 @@ class _TicketNewPageState extends State<TicketNewPage> {
               ),
               if (_refs.isEmpty)
                 Padding(
-                  padding: const EdgeInsets.only(left: 12, top: 4),
-                  child: Text(
-                    bt('linksHint'),
-                    style:
-                        const TextStyle(color: subtitleColor, fontSize: 12),
-                  ),
+                  padding: const EdgeInsets.only(left: 12),
+                  child: TicketEmpty(bt('linksHint')),
                 )
               else
                 Padding(
@@ -393,36 +351,22 @@ class _TicketNewPageState extends State<TicketNewPage> {
                 children: [
                   TextButton.icon(
                     onPressed: _pickFiles,
-                    icon: const Icon(Icons.attach_file,
-                        size: 16, color: tertiaryColor),
-                    label: Text(
-                      bt('addFiles'),
-                      style:
-                          const TextStyle(color: tertiaryColor, fontSize: 13),
-                    ),
+                    icon: const Icon(Icons.attach_file),
+                    label: Text(bt('addFiles')),
                   ),
                   // Come nel dettaglio: si naviga fino al punto e si scatta;
                   // le schermate tornano qui fra i file da allegare.
                   TextButton.icon(
                     onPressed: _startScreenshot,
-                    icon: const Icon(Icons.photo_camera,
-                        size: 16, color: tertiaryColor),
-                    label: Text(
-                      bt('screenshot'),
-                      style:
-                          const TextStyle(color: tertiaryColor, fontSize: 13),
-                    ),
+                    icon: const Icon(Icons.photo_camera_outlined),
+                    label: Text(bt('screenshot')),
                   ),
                 ],
               ),
               if (_files.isEmpty)
                 Padding(
                   padding: const EdgeInsets.only(left: 12),
-                  child: Text(
-                    bt('attachmentsHint'),
-                    style:
-                        const TextStyle(color: subtitleColor, fontSize: 12),
-                  ),
+                  child: TicketEmpty(bt('attachmentsHint')),
                 )
               else
                 Padding(
@@ -448,7 +392,8 @@ class _TicketNewPageState extends State<TicketNewPage> {
         const Gap(10),
         Text(
           '* ${bt('requiredNote')}',
-          style: const TextStyle(color: subtitleColor, fontSize: 12),
+          style: theme.textTheme.bodySmall
+              ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
         ),
         const Gap(24),
       ],

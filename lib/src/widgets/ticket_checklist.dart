@@ -1,5 +1,4 @@
 import 'package:perfect_board/src/models/ticket.dart';
-import 'package:perfect_board/src/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:perfect_board/src/l10n.dart';
 import 'package:gap/gap.dart';
@@ -57,46 +56,50 @@ class _TicketChecklistState extends State<TicketChecklist> {
   @override
   Widget build(BuildContext context) {
     final done = widget.items.where((i) => i.done).length;
+    final total = widget.items.length;
 
     return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (widget.items.isNotEmpty)
-            for (var i = 0; i < widget.items.length; i++)
-              _ChecklistRow(
-                item: widget.items[i],
-                onToggle: () => _toggle(i),
-                onRemove: () => _remove(i),
-              ),
-          const Gap(8),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (total > 0) ...[
           Row(
             children: [
-              Expanded(
-                child: TextField(
-                  controller: _controller,
-                  onSubmitted: (_) => _add(),
-                  decoration: InputDecoration(
-                    hintText: bt('checklistHint'),
-                    isDense: true,
-                  ),
-                ),
-              ),
-              const Gap(8),
-              IconButton(
-                tooltip: bt('add'),
-                icon: const Icon(Icons.add, size: 18, color: tertiaryColor),
-                onPressed: _add,
-              ),
-              if (widget.items.isNotEmpty) ...[
-                const Gap(8),
-                Text(
-                  '$done/${widget.items.length}',
-                  style: const TextStyle(color: subtitleColor, fontSize: 12),
-                ),
-              ],
+              Expanded(child: LinearProgressIndicator(value: done / total)),
+              const Gap(12),
+              Text('$done/$total',
+                  style: Theme.of(context).textTheme.labelMedium),
             ],
           ),
+          const Gap(4),
+          for (var i = 0; i < total; i++)
+            _ChecklistRow(
+              item: widget.items[i],
+              onToggle: () => _toggle(i),
+              onRemove: () => _remove(i),
+            ),
         ],
+        const Gap(8),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _controller,
+                onSubmitted: (_) => _add(),
+                decoration: InputDecoration(
+                  hintText: bt('checklistHint'),
+                  isDense: true,
+                ),
+              ),
+            ),
+            const Gap(8),
+            IconButton.filledTonal(
+              tooltip: bt('add'),
+              icon: const Icon(Icons.add),
+              onPressed: _add,
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -114,40 +117,29 @@ class _ChecklistRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 28,
-          child: Checkbox(
-            value: item.done,
-            visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
-            onChanged: (_) => onToggle(),
-          ),
-        ),
-        Expanded(
-          child: InkWell(
-            onTap: onToggle,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Text(
-                item.text,
-                style: TextStyle(
-                  color: item.done ? subtitleColor : lightTextColor,
-                  fontSize: 13,
-                  decoration: item.done ? TextDecoration.lineThrough : null,
-                ),
-              ),
-            ),
-          ),
-        ),
-        InkWell(
-          onTap: onRemove,
-          child: const Padding(
-            padding: EdgeInsets.all(4),
-            child: Icon(Icons.close, size: 14, color: subtitleColor),
-          ),
-        ),
-      ],
+    final theme = Theme.of(context);
+    return CheckboxListTile(
+      value: item.done,
+      onChanged: (_) => onToggle(),
+      controlAffinity: ListTileControlAffinity.leading,
+      contentPadding: EdgeInsets.zero,
+      dense: true,
+      title: Text(
+        item.text,
+        style: item.done
+            ? TextStyle(
+                color: theme.colorScheme.onSurfaceVariant,
+                decoration: TextDecoration.lineThrough,
+              )
+            : null,
+      ),
+      secondary: IconButton(
+        tooltip: bt('remove'),
+        visualDensity: VisualDensity.compact,
+        iconSize: 18,
+        icon: const Icon(Icons.close),
+        onPressed: onRemove,
+      ),
     );
   }
 }

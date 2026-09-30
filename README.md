@@ -99,6 +99,30 @@ MaterialApp.router(
 
 Then link `/tickets` from your menu, for admins only.
 
+### Look and feel
+
+The board uses only standard **Material 3** components (AppBar, SearchBar,
+Card, FilterChip, InputChip, DropdownMenu, CheckboxListTile, FilledButton,
+SnackBar…) and takes colors, shapes and typography from your app's theme:
+light or dark, any seed color. To change what the `ColorScheme` does not
+cover, add a `BoardTheme` to your theme's extensions:
+
+```dart
+ThemeData(
+  colorSchemeSeed: Colors.teal,
+  extensions: const [
+    BoardTheme(
+      columnColor: Color(0xFFF1F4F8),   // column background
+      cardColor: Colors.white,          // card background
+      statusColors: {TicketStatus.nuova: Colors.indigo},
+      labelColors: {TicketLabel.bug: Colors.deepOrange},
+    ),
+  ],
+)
+```
+
+Every field is optional; what you leave out follows the theme.
+
 ### Links to your documents
 
 A card can point to documents of your app. Register one source per kind:
@@ -196,7 +220,6 @@ Status keys are Italian for historical reasons: they are data, not text.
 
 ## Roadmap
 
-- Configurable theme (today: the navy palette it was born with).
 - Publication on pub.dev.
 
 ## License

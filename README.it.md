@@ -103,6 +103,30 @@ MaterialApp.router(
 
 Poi metti un collegamento a `/tickets` nel menu, solo per gli admin.
 
+### Aspetto
+
+La board usa solo componenti **Material 3** standard (AppBar, SearchBar,
+Card, FilterChip, InputChip, DropdownMenu, CheckboxListTile, FilledButton,
+SnackBar…) e prende colori, forme e tipografia dal tema dell'app: chiaro o
+scuro, qualunque colore seme. Per cambiare ciò che il `ColorScheme` non
+copre, aggiungi un `BoardTheme` alle estensioni del tema:
+
+```dart
+ThemeData(
+  colorSchemeSeed: Colors.teal,
+  extensions: const [
+    BoardTheme(
+      columnColor: Color(0xFFF1F4F8),   // fondo delle colonne
+      cardColor: Colors.white,          // fondo delle card
+      statusColors: {TicketStatus.nuova: Colors.indigo},
+      labelColors: {TicketLabel.bug: Colors.deepOrange},
+    ),
+  ],
+)
+```
+
+Ogni campo è facoltativo; quello che non metti segue il tema.
+
 ### Collegamenti ai tuoi documenti
 
 Una scheda può puntare a documenti dell'app. Registra una sorgente per tipo:
@@ -200,7 +224,6 @@ sessione.
 
 ## Prossimi passi
 
-- Tema configurabile (oggi: la palette navy con cui è nata).
 - Pubblicazione su pub.dev.
 
 ## Licenza

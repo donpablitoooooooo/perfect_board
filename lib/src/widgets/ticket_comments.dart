@@ -3,7 +3,6 @@ import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:perfect_board/src/models/ticket.dart';
 import 'package:perfect_board/src/config.dart';
-import 'package:perfect_board/src/theme.dart';
 import 'package:perfect_board/src/widgets/ticket_attachment_preview.dart';
 import 'package:perfect_board/src/widgets/ticket_attachments.dart';
 import 'package:perfect_board/src/widgets/ticket_fields.dart';
@@ -190,24 +189,17 @@ class _TicketCommentsState extends State<TicketComments> {
               IconButton(
                 tooltip: bt('addFiles'),
                 onPressed: _sending ? null : _pickFiles,
-                icon: const Icon(Icons.attach_file,
-                    size: 16, color: tertiaryColor),
+                icon: const Icon(Icons.attach_file),
               ),
               IconButton(
                 tooltip: bt('screenshot'),
                 onPressed: _sending ? null : _startScreenshot,
-                icon: const Icon(Icons.photo_camera,
-                    size: 16, color: tertiaryColor),
+                icon: const Icon(Icons.photo_camera_outlined),
               ),
               const Gap(8),
-              ElevatedButton(
-                style: ButtonStyle(
-                  elevation: WidgetStateProperty.all(0),
-                ),
+              FilledButton(
                 onPressed: _sending ? null : _send,
-                child: Text(_sending
-                    ? bt('sending')
-                    : bt('comment')),
+                child: Text(_sending ? bt('sending') : bt('comment')),
               ),
             ],
           ),
@@ -281,8 +273,8 @@ class _TicketCommentsState extends State<TicketComments> {
   }
 }
 
-/// Un commento. Chi l'ha scritto si distingue dagli altri dal colore: i tuoi
-/// in oro, gli altri in grigio.
+/// Un commento: `Card.filled` con l'iniziale di chi l'ha scritto. I tuoi
+/// hanno il colore "secondario" del tema, così si ritrovano a colpo d'occhio.
 class _CommentBubble extends StatelessWidget {
   final TicketComment comment;
   final List<TicketAttachment> attachments;
@@ -291,66 +283,70 @@ class _CommentBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final isMine = comment.authorUid == PerfectBoard.user.uid;
-    final color = isMine ? tertiaryColor : Colors.blueGrey;
+    final name = comment.authorName.trim();
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cardColor,
-        border: Border(left: BorderSide(color: color, width: 2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                comment.authorName.toUpperCase(),
-                style: TextStyle(
-                  color: color,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1,
-                ),
-              ),
-              const Gap(10),
-              Text(
-                comment.createdAt != null
-                    ? dateTimeFormat.format(comment.createdAt!)
-                    : bt('now'),
-                style: const TextStyle(color: subtitleColor, fontSize: 11),
-              ),
-            ],
-          ),
-          if (comment.text.isNotEmpty) ...[
-            const Gap(6),
-            SelectableText(
-              comment.text,
-              style: const TextStyle(
-                  color: lightTextColor, fontSize: 13, height: 1.5),
+    return Card.filled(
+      margin: EdgeInsets.zero,
+      color: isMine ? scheme.secondaryContainer : scheme.surfaceContainerHigh,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              radius: 16,
+              child: Text(name.isEmpty ? '?' : name[0].toUpperCase()),
             ),
-          ],
-          if (attachments.isNotEmpty) ...[
-            const Gap(10),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                for (var i = 0; i < attachments.length; i++)
-                  TicketAttachmentTile(
-                    attachment: attachments[i],
-                    onOpen: () => showTicketAttachmentPreview(
-                      context,
-                      attachments: attachments,
-                      initialIndex: i,
-                    ),
+            const Gap(12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(name, style: theme.textTheme.titleSmall),
+                      Text(
+                        comment.createdAt != null
+                            ? dateTimeFormat.format(comment.createdAt!)
+                            : bt('now'),
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: scheme.onSurfaceVariant),
+                      ),
+                    ],
                   ),
-              ],
+                  if (comment.text.isNotEmpty) ...[
+                    const Gap(4),
+                    SelectableText(comment.text,
+                        style: theme.textTheme.bodyMedium),
+                  ],
+                  if (attachments.isNotEmpty) ...[
+                    const Gap(10),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        for (var i = 0; i < attachments.length; i++)
+                          TicketAttachmentTile(
+                            attachment: attachments[i],
+                            onOpen: () => showTicketAttachmentPreview(
+                              context,
+                              attachments: attachments,
+                              initialIndex: i,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
             ),
           ],
-        ],
+        ),
       ),
     );
   }

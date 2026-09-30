@@ -2,7 +2,7 @@ import 'dart:developer';
 
 import 'package:perfect_board/src/config.dart';
 import 'package:perfect_board/src/models/ticket.dart';
-import 'package:perfect_board/src/theme.dart';
+import 'package:perfect_board/src/widgets/ticket_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:perfect_board/src/l10n.dart';
 import 'package:gap/gap.dart';
@@ -143,34 +143,20 @@ class _RefPickerState extends State<_RefPicker> {
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
                   : results.isEmpty
-                      ? Center(
-                          child: Text(
-                            bt('noResults'),
-                            style: const TextStyle(
-                                color: subtitleColor, fontSize: 13),
-                          ),
-                        )
+                      ? Center(child: TicketEmpty(bt('noResults')))
                       : ListView.builder(
                           itemCount: results.length,
                           itemBuilder: (_, i) {
                             final hit = results[i];
                             return ListTile(
-                              dense: true,
-                              leading: Icon(source.icon,
-                                  size: 18, color: subtitleColor),
-                              title: Text(
-                                hit.label,
-                                style: const TextStyle(
-                                    color: lightTextColor, fontSize: 13),
-                              ),
+                              leading: Icon(source.icon),
+                              title: Text(hit.label),
                               subtitle: hit.subtitle.isEmpty
                                   ? null
                                   : Text(
                                       hit.subtitle,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                          color: subtitleColor, fontSize: 11),
                                     ),
                               onTap: () => Navigator.pop(
                                 context,
@@ -214,11 +200,8 @@ class TicketRefButtons extends StatelessWidget {
               final ref = await pickTicketRef(context, source);
               if (ref != null) onPicked(ref);
             },
-            icon: Icon(source.icon, size: 16, color: tertiaryColor),
-            label: Text(
-              source.label,
-              style: const TextStyle(color: tertiaryColor, fontSize: 13),
-            ),
+            icon: Icon(source.icon),
+            label: Text(source.label),
           ),
       ],
     );
@@ -239,43 +222,15 @@ class TicketRefChips extends StatelessWidget {
       runSpacing: 8,
       children: [
         for (final ref in refs)
-          Container(
-            padding: EdgeInsets.only(
-              left: 8,
-              top: 4,
-              bottom: 4,
-              right: onRemove == null ? 8 : 0,
+          InputChip(
+            avatar: Icon(ref.icon),
+            label: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 220),
+              child: Text(ref.label, overflow: TextOverflow.ellipsis),
             ),
-            decoration: BoxDecoration(
-              color: pureBlack,
-              border: Border.all(color: tertiaryColor.withAlpha(90)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(ref.icon, size: 14, color: subtitleColor),
-                const Gap(6),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 220),
-                  child: Text(
-                    ref.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        color: lightTextColor, fontSize: 12),
-                  ),
-                ),
-                if (onRemove != null)
-                  InkWell(
-                    onTap: () => onRemove!(ref),
-                    child: const Padding(
-                      padding: EdgeInsets.all(4),
-                      child:
-                          Icon(Icons.close, size: 14, color: subtitleColor),
-                    ),
-                  ),
-              ],
-            ),
+            tooltip: ref.kindLabel,
+            onDeleted: onRemove == null ? null : () => onRemove!(ref),
+            deleteButtonTooltipMessage: bt('remove'),
           ),
       ],
     );

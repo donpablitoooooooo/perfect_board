@@ -120,85 +120,48 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
     final ticket = _ticket;
     if (ticket == null) {
       return Scaffold(
-        body: Center(
-          child: Text(bt('notFound'),
-              style: const TextStyle(color: subtitleColor)),
-        ),
+        appBar: AppBar(),
+        body: Center(child: TicketEmpty(bt('notFound'))),
       );
     }
 
+    final theme = Theme.of(context);
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            _buildHeader(ticket),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Center(
-                  child: SizedBox(width: 860, child: _buildBody(ticket)),
-                ),
-              ),
+            Text(ticket.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text(
+              '#${ticket.shortId} · ${ticket.createdByName} · '
+              '${ticket.createdAt != null ? dateTimeFormat.format(ticket.createdAt!) : '—'}',
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(Ticket ticket) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(8, 12, 24, 12),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: cardColor)),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: tertiaryColor),
-            onPressed: () => Navigator.pop(context),
-          ),
-          const Gap(8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  ticket.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold),
-                ),
-                const Gap(2),
-                Text(
-                  '#${ticket.shortId} · ${ticket.createdByName} · '
-                  '${ticket.createdAt != null ? dateTimeFormat.format(ticket.createdAt!) : '—'}',
-                  style: const TextStyle(color: subtitleColor, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-          const Gap(16),
+        actions: [
           _buildStatusPicker(ticket),
           const Gap(12),
           OutlinedButton.icon(
-            icon: const Icon(Icons.download_outlined, size: 16),
+            icon: const Icon(Icons.download_outlined),
             label: Text(bt('export')),
             onPressed: () => showTicketExport(context, ticket),
           ),
-          const Gap(4),
           IconButton(
             tooltip: bt('deleteTooltip'),
-            icon: const Icon(Icons.delete_outline,
-                size: 18, color: subtitleColor),
+            icon: const Icon(Icons.delete_outline),
             onPressed: () => _delete(ticket),
           ),
+          const Gap(8),
         ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: SizedBox(width: 860, child: _buildBody(ticket)),
+        ),
       ),
     );
   }
@@ -206,44 +169,35 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
   /// Lo stato: l'unica cosa che si cambia da qui, quindi sta sempre in vista
   /// e col suo colore addosso.
   Widget _buildStatusPicker(Ticket ticket) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: cardColor,
-        border: Border.all(color: ticket.status.color.withAlpha(140)),
+    Icon dot(TicketStatus status) =>
+        Icon(Icons.circle, size: 12, color: context.board.status(status));
+    return DropdownMenu<TicketStatus>(
+      // La chiave cambia con lo stato: così il campo si riallinea anche
+      // quando lo stato lo cambia qualcun altro (o la CLI).
+      key: ValueKey(ticket.status),
+      initialSelection: ticket.status,
+      leadingIcon: dot(ticket.status),
+      requestFocusOnTap: false,
+      inputDecorationTheme: const InputDecorationTheme(
+        isDense: true,
+        border: OutlineInputBorder(),
       ),
-      child: DropdownButton<TicketStatus>(
-        value: ticket.status,
-        underline: const SizedBox(),
-        items: [
-          for (final status in TicketStatus.values)
-            DropdownMenuItem(
-              value: status,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                        color: status.color, shape: BoxShape.circle),
-                  ),
-                  const Gap(10),
-                  Text(status.label,
-                      style: const TextStyle(
-                          color: lightTextColor, fontSize: 13)),
-                ],
-              ),
-            ),
-        ],
-        onChanged: (value) {
-          if (value != null) _setStatus(value);
-        },
-      ),
+      dropdownMenuEntries: [
+        for (final status in TicketStatus.values)
+          DropdownMenuEntry(
+            value: status,
+            label: status.label,
+            leadingIcon: dot(status),
+          ),
+      ],
+      onSelected: (value) {
+        if (value != null) _setStatus(value);
+      },
     );
   }
 
   Widget _buildBody(Ticket ticket) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -252,11 +206,7 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
         _EditableText(
           value: ticket.title,
           label: bt('fieldTitle'),
-          style: const TextStyle(
-              color: lightTextColor,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              height: 1.3),
+          style: theme.textTheme.headlineSmall!,
           onSave: (text) => _update({'title': text}, bt('saved')),
         ),
         const Gap(20),
@@ -264,8 +214,7 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
           value: ticket.body,
           label: bt('fieldBody'),
           maxLines: 8,
-          style: const TextStyle(
-              color: lightTextColor, fontSize: 15, height: 1.6),
+          style: theme.textTheme.bodyLarge!,
           onSave: (text) => _update({'body': text}, bt('saved')),
         ),
 
@@ -316,12 +265,8 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
               ),
               if (ticket.refs.isEmpty)
                 Padding(
-                  padding: const EdgeInsets.only(left: 12, top: 4),
-                  child: Text(
-                    bt('linksHint'),
-                    style:
-                        const TextStyle(color: subtitleColor, fontSize: 12),
-                  ),
+                  padding: const EdgeInsets.only(left: 12),
+                  child: TicketEmpty(bt('linksHint')),
                 )
               else
                 Padding(
@@ -362,13 +307,9 @@ class _TicketDetailPageState extends State<TicketDetailPage> {
         const Divider(),
         const Gap(16),
         Text(
-          bt('sectionComments').toUpperCase(),
-          style: const TextStyle(
-            color: tertiaryColor,
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1,
-          ),
+          bt('sectionComments'),
+          style: theme.textTheme.titleMedium
+              ?.copyWith(color: theme.colorScheme.primary),
         ),
         const Gap(14),
         TicketComments(
@@ -457,15 +398,13 @@ class _EditableTextState extends State<_EditableText> {
     // cliccare. Non dovrebbe capitare, sono obbligatori, ma le schede
     // scritte dalla CLI potrebbero non avere la descrizione.
     if (!_editing && widget.value.isNotEmpty) {
-      return MouseRegion(
-        cursor: SystemMouseCursors.text,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () => setState(() => _editing = true),
-          child: SizedBox(
-            width: double.infinity,
-            child: Text(widget.value, style: widget.style),
-          ),
+      return InkWell(
+        mouseCursor: SystemMouseCursors.text,
+        borderRadius: BorderRadius.circular(8),
+        onTap: () => setState(() => _editing = true),
+        child: SizedBox(
+          width: double.infinity,
+          child: Text(widget.value, style: widget.style),
         ),
       );
     }

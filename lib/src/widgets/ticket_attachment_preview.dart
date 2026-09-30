@@ -3,9 +3,9 @@ import 'dart:developer';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:perfect_board/src/models/ticket.dart';
-import 'package:perfect_board/src/theme.dart';
 import 'package:perfect_board/src/open_url.dart';
 import 'package:flutter/material.dart';
+import 'package:perfect_board/src/widgets/ticket_ui.dart';
 import 'package:perfect_board/src/l10n.dart';
 import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
@@ -82,8 +82,8 @@ class _PreviewDialogState extends State<_PreviewDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     final many = widget.attachments.length > 1;
+    final theme = Theme.of(context);
 
     return CallbackShortcuts(
       bindings: {
@@ -92,36 +92,48 @@ class _PreviewDialogState extends State<_PreviewDialog> {
       },
       child: Focus(
         autofocus: true,
-        child: Dialog(
-          backgroundColor: pureBlack,
-          insetPadding: const EdgeInsets.all(24),
-          shape: const RoundedRectangleBorder(),
-          child: SizedBox(
-            width: size.width * 0.9,
-            height: size.height * 0.9,
-            child: Column(
+        child: Dialog.fullscreen(
+          child: Scaffold(
+            appBar: AppBar(
+              leading: const CloseButton(),
+              title: Text(_current.name,
+                  maxLines: 1, overflow: TextOverflow.ellipsis),
+              actions: [
+                Text(
+                  [
+                    if (_current.readableSize.isNotEmpty)
+                      _current.readableSize,
+                    if (many) '${_index + 1} / ${widget.attachments.length}',
+                  ].join('  ·  '),
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                ),
+                const Gap(8),
+                IconButton(
+                  tooltip: bt('openInNewTab'),
+                  onPressed: _current.url.isEmpty
+                      ? null
+                      : () => openUrl(_current.url),
+                  icon: const Icon(Icons.open_in_new),
+                ),
+                const Gap(8),
+              ],
+            ),
+            body: Row(
+              // stretch: senza, un testo corto finirebbe a metà altezza
+              // invece di partire dall'alto.
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _header(many),
-                const Divider(height: 1),
+                if (many) _arrow(Icons.chevron_left, _hasPrev, -1),
                 Expanded(
-                  child: Row(
-                    // stretch: senza, un testo corto finirebbe a metà
-                    // altezza invece di partire dall'alto.
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (many) _arrow(Icons.chevron_left, _hasPrev, -1),
-                      Expanded(
-                        // La chiave fa ripartire il contenuto a ogni cambio:
-                        // un video o un PDF non devono restare quelli di prima.
-                        child: KeyedSubtree(
-                          key: ValueKey(_current.id),
-                          child: _body(_current),
-                        ),
-                      ),
-                      if (many) _arrow(Icons.chevron_right, _hasNext, 1),
-                    ],
+                  // La chiave fa ripartire il contenuto a ogni cambio: un
+                  // video o un PDF non devono restare quelli di prima.
+                  child: KeyedSubtree(
+                    key: ValueKey(_current.id),
+                    child: _body(_current),
                   ),
                 ),
+                if (many) _arrow(Icons.chevron_right, _hasNext, 1),
               ],
             ),
           ),
@@ -130,49 +142,13 @@ class _PreviewDialogState extends State<_PreviewDialog> {
     );
   }
 
-  Widget _header(bool many) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              _current.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: lightTextColor, fontSize: 14),
-            ),
-          ),
-          const Gap(12),
-          Text(
-            [
-              if (_current.readableSize.isNotEmpty) _current.readableSize,
-              if (many) '${_index + 1} / ${widget.attachments.length}',
-            ].join('  ·  '),
-            style: const TextStyle(color: subtitleColor, fontSize: 12),
-          ),
-          const Gap(8),
-          IconButton(
-            tooltip: bt('openInNewTab'),
-            onPressed: _current.url.isEmpty
-                ? null
-                : () => openUrl(_current.url),
-            icon: const Icon(Icons.open_in_new, size: 18, color: tertiaryColor),
-          ),
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.close, color: subtitleColor),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _arrow(IconData icon, bool enabled, int delta) {
-    return IconButton(
-      onPressed: enabled ? () => _go(delta) : null,
-      icon: Icon(icon,
-          size: 32, color: enabled ? lightTextColor : subtitleColor),
+    return Center(
+      child: IconButton(
+        iconSize: 32,
+        onPressed: enabled ? () => _go(delta) : null,
+        icon: Icon(icon),
+      ),
     );
   }
 
@@ -216,12 +192,10 @@ class _PreviewDialogState extends State<_PreviewDialog> {
               width: double.infinity,
               child: SelectableText(
                 utf8.decode(bytes, allowMalformed: true),
-                style: const TextStyle(
-                  color: lightTextColor,
-                  fontSize: 12,
-                  fontFamily: 'monospace',
-                  height: 1.4,
-                ),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(fontFamily: 'monospace'),
               ),
             ),
           ),
@@ -238,7 +212,8 @@ class _PreviewDialogState extends State<_PreviewDialog> {
           child: Text(
             text,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: subtitleColor, fontSize: 13),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ),
       );
@@ -249,7 +224,7 @@ class _Loading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      const Center(child: CircularProgressIndicator(color: tertiaryColor));
+      const Center(child: CircularProgressIndicator());
 }
 
 /// Scarica il file e passa i byte a [builder]. PDF e testo vanno letti
@@ -349,12 +324,7 @@ class _VideoPreviewState extends State<_VideoPreview> {
   @override
   Widget build(BuildContext context) {
     if (_failed) {
-      return Center(
-        child: Text(
-          bt('previewFailed'),
-          style: const TextStyle(color: subtitleColor, fontSize: 13),
-        ),
-      );
+      return Center(child: TicketEmpty(bt('previewFailed')));
     }
     final value = _controller.value;
     if (!value.isInitialized) return const _Loading();
@@ -376,21 +346,23 @@ class _VideoPreviewState extends State<_VideoPreview> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
             children: [
-              IconButton(
+              IconButton.filledTonal(
                 onPressed: _toggle,
-                icon: Icon(
-                  value.isPlaying ? Icons.pause : Icons.play_arrow,
-                  color: tertiaryColor,
-                ),
+                icon: Icon(value.isPlaying ? Icons.pause : Icons.play_arrow),
               ),
+              const Gap(8),
               Expanded(
                 child: VideoProgressIndicator(
                   _controller,
                   allowScrubbing: true,
-                  colors: const VideoProgressColors(
-                    playedColor: tertiaryColor,
-                    bufferedColor: subtitleColor,
-                    backgroundColor: cardColor,
+                  colors: VideoProgressColors(
+                    playedColor: Theme.of(context).colorScheme.primary,
+                    bufferedColor: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withAlpha(80),
+                    backgroundColor:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
                   ),
                 ),
               ),

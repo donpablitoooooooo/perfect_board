@@ -4,7 +4,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:perfect_board/src/models/ticket.dart';
 import 'package:perfect_board/src/config.dart';
-import 'package:perfect_board/src/theme.dart';
 import 'package:perfect_board/src/widgets/ticket_attachment_preview.dart';
 import 'package:perfect_board/src/widgets/ticket_screenshot.dart';
 import 'package:perfect_board/src/widgets/ticket_ui.dart';
@@ -12,7 +11,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:perfect_board/src/l10n.dart';
-import 'package:gap/gap.dart';
 
 /// Oltre questa soglia il caricamento si rifiuta: gli allegati servono a far
 /// capire un problema, non ad archiviare video.
@@ -188,7 +186,7 @@ class _TicketAttachmentsState extends State<TicketAttachments> {
             onPressed: () => Navigator.pop(dialogContext, false),
             child: Text(bt('cancel')),
           ),
-          TextButton(
+          FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
             child: Text(bt('remove')),
           ),
@@ -223,16 +221,8 @@ class _TicketAttachmentsState extends State<TicketAttachments> {
             TextButton.icon(
               onPressed: _uploading ? null : _pickAndUpload,
               icon: Icon(
-                _uploading ? Icons.hourglass_empty : Icons.attach_file,
-                size: 16,
-                color: tertiaryColor,
-              ),
-              label: Text(
-                _uploading
-                    ? bt('uploading')
-                    : bt('addFiles'),
-                style: const TextStyle(color: tertiaryColor, fontSize: 13),
-              ),
+                  _uploading ? Icons.hourglass_empty : Icons.attach_file),
+              label: Text(_uploading ? bt('uploading') : bt('addFiles')),
             ),
             // Schermata del backoffice: si naviga fino al punto e si scatta
             // dalla barretta in basso (ticket_screenshot.dart).
@@ -245,15 +235,8 @@ class _TicketAttachmentsState extends State<TicketAttachments> {
                 ));
                 ticketToast(context, bt('screenshotStarted'));
               },
-              icon: const Icon(
-                Icons.photo_camera,
-                size: 16,
-                color: tertiaryColor,
-              ),
-              label: Text(
-                bt('screenshot'),
-                style: const TextStyle(color: tertiaryColor, fontSize: 13),
-              ),
+              icon: const Icon(Icons.photo_camera_outlined),
+              label: Text(bt('screenshot')),
             ),
           ],
         ),
@@ -299,10 +282,7 @@ class _TicketAttachmentsState extends State<TicketAttachments> {
 
   Widget _hint(String text) => Padding(
         padding: const EdgeInsets.only(left: 12),
-        child: Text(
-          text,
-          style: const TextStyle(color: subtitleColor, fontSize: 12),
-        ),
+        child: TicketEmpty(text),
       );
 }
 
@@ -323,64 +303,20 @@ class TicketAttachmentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 150,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          InkWell(
-            onTap: onOpen,
-            child: Container(
-              height: 96,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: pureBlack,
-                border: Border.all(color: cardColor),
-              ),
-              child: attachment.isImage
-                  ? CachedNetworkImage(
-                      imageUrl: attachment.url,
-                      fit: BoxFit.cover,
-                      errorWidget: (_, __, ___) => const Icon(
-                        Icons.broken_image_outlined,
-                        color: subtitleColor,
-                      ),
-                    )
-                  : Icon(
-                      attachment.contentType.startsWith('video/')
-                          ? Icons.movie_outlined
-                          : Icons.insert_drive_file_outlined,
-                      color: subtitleColor,
-                      size: 32),
-            ),
-          ),
-          const Gap(6),
-          Text(
-            attachment.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: lightTextColor, fontSize: 12),
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  attachment.readableSize,
-                  style: const TextStyle(color: subtitleColor, fontSize: 11),
-                ),
-              ),
-              if (onDelete != null)
-                InkWell(
-                  onTap: onDelete,
-                  child: const Padding(
-                    padding: EdgeInsets.all(4),
-                    child: Icon(Icons.close, size: 14, color: subtitleColor),
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
+    return TicketFileCard(
+      name: attachment.name,
+      size: attachment.readableSize,
+      onTap: onOpen,
+      onRemove: onDelete,
+      removeTooltip: bt('removeAttachment'),
+      preview: attachment.isImage
+          ? CachedNetworkImage(
+              imageUrl: attachment.url,
+              fit: BoxFit.cover,
+              errorWidget: (_, __, ___) =>
+                  TicketFileIcon(attachment.contentType),
+            )
+          : TicketFileIcon(attachment.contentType),
     );
   }
 }

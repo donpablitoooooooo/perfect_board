@@ -2,7 +2,6 @@ import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:perfect_board/src/models/ticket.dart';
-import 'package:perfect_board/src/theme.dart';
 import 'package:perfect_board/src/widgets/ticket_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:perfect_board/src/l10n.dart';
@@ -31,15 +30,12 @@ Future<bool> confirmAndDeleteTicket(BuildContext context, Ticket ticket) async {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '#${ticket.shortId} · ${ticket.title}',
-            style: const TextStyle(color: lightTextColor, fontSize: 13),
-          ),
+          Text('#${ticket.shortId} · ${ticket.title}'),
           const SizedBox(height: 12),
           Text(
             bt('deleteBody'),
-            style: const TextStyle(
-                color: subtitleColor, fontSize: 12, height: 1.4),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ],
       ),
@@ -48,10 +44,14 @@ Future<bool> confirmAndDeleteTicket(BuildContext context, Ticket ticket) async {
           onPressed: () => Navigator.pop(dialogContext, false),
           child: Text(bt('cancel')),
         ),
-        TextButton(
+        // Azione distruttiva: FilledButton nei colori "error" del tema.
+        FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.error,
+            foregroundColor: Theme.of(context).colorScheme.onError,
+          ),
           onPressed: () => Navigator.pop(dialogContext, true),
-          child: Text(bt('delete'),
-              style: const TextStyle(color: errorColor)),
+          child: Text(bt('delete')),
         ),
       ],
     ),

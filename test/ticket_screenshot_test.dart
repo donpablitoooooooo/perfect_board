@@ -4,19 +4,12 @@ import 'package:perfect_board/src/widgets/ticket_screenshot.dart';
 import 'package:flutter/gestures.dart';
 import 'package:perfect_board/src/l10n.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 int presses = 0;
 
 void main() {
-  // I toast passano da un plugin che nei test non c'è.
-  setUp(() => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-      .setMockMethodCallHandler(
-          const MethodChannel('PonnamKarthik/fluttertoast'),
-          (_) async => true));
-
   Future<GoRouter> pumpApp(WidgetTester tester, String returnTo) async {
     tester.view.physicalSize = const Size(1280, 800);
     tester.view.devicePixelRatio = 1;
@@ -157,8 +150,11 @@ void main() {
       image.dispose();
       return pixel;
     });
-    expect(rgba![0], greaterThan(200), reason: 'rosso');
-    expect(rgba[1], lessThan(140));
+    // Il tratto ha il colore `error` del tema (qui il Material 3 di default).
+    final ink = ThemeData().colorScheme.error;
+    expect(rgba![0], closeTo((ink.r * 255).round(), 8), reason: 'rosso');
+    expect(rgba[1], closeTo((ink.g * 255).round(), 8));
+    expect(rgba[2], closeTo((ink.b * 255).round(), 8));
     await tester.pump(const Duration(seconds: 5));
   });
 
