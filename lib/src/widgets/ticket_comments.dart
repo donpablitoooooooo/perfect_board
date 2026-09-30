@@ -1,0 +1,357 @@
+import 'dart:developer';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:perfect_board/src/models/ticket.dart';
+import 'package:perfect_board/src/config.dart';
+import 'package:perfect_board/src/theme.dart';
+import 'package:perfect_board/src/widgets/ticket_attachment_preview.dart';
+import 'package:perfect_board/src/widgets/ticket_attachments.dart';
+import 'package:perfect_board/src/widgets/ticket_fields.dart';
+import 'package:perfect_board/src/widgets/ticket_screenshot.dart';
+import 'package:perfect_board/src/widgets/ticket_ui.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:perfect_board/src/l10n.dart';
+import 'package:gap/gap.dart';
+
+/// I commenti di una segnalazione: il canale fra chi l'ha aperta e chi la
+/// lavora.
+///
+/// Li vedono tutti gli admin — è la differenza con la timeline di lavorazione,
+/// che resta a chi ha il claim. Un commento non si modifica e non si cancella:
+/// si risponde. Serve a poter rileggere una discussione e capirla, invece di
+/// trovare buchi dove qualcuno ha ripulito.
+///
+/// Un commento può portarsi dietro dei file. Finiscono fra gli allegati della
+/// scheda come gli altri (stesso conteggio, stesso export, stessa pulizia
+/// quando la scheda si elimina) con in più il `commentId`, che serve a
+/// mostrarli anche sotto il commento che li ha portati.
+/// Commento lasciato a metà per andare a scattare una schermata: la pagina
+/// si smonta mentre si naviga, e al ritorno testo e file devono esserci.
+class _CommentDraft {
+  final String text;
+  final List<PlatformFile> files;
+
+  const _CommentDraft(this.text, this.files);
+}
+
+final Map<String, _CommentDraft> _commentDrafts = {};
+
+class TicketComments extends StatefulWidget {
+  final String ticketId;
+
+  /// Titolo della scheda, per la barretta delle schermate.
+  final String ticketTitle;
+
+  const TicketComments({
+    super.key,
+    required this.ticketId,
+    required this.ticketTitle,
+  });
+
+  @override
+  State<TicketComments> createState() => _TicketCommentsState();
+}
+
+class _TicketCommentsState extends State<TicketComments> {
+  final TextEditingController _controller = TextEditingController();
+  final List<PlatformFile> _files = [];
+  bool _sending = false;
+
+  String get _draftKey => 'comment:${widget.ticketId}';
+
+  @override
+  void initState() {
+    super.initState();
+    final draft = _commentDrafts.remove(widget.ticketId);
+    if (draft != null) {
+      _controller.text = draft.text;
+      _files.addAll(draft.files);
+    }
+    _files.addAll(TicketScreenshot.takeShots(_draftKey));
+    TicketScreenshot.shotsChanged.addListener(_pullShots);
+  }
+
+  @override
+  void dispose() {
+    TicketScreenshot.shotsChanged.removeListener(_pullShots);
+    if (TicketScreenshot.isActiveFor(_draftKey)) {
+      _commentDrafts[widget.ticketId] =
+          _CommentDraft(_controller.text, List.of(_files));
+    }
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// Schermata scattata senza lasciare la pagina: il widget è ancora qui.
+  void _pullShots() {
+    final shots = TicketScreenshot.takeShots(_draftKey);
+    if (shots.isNotEmpty && mounted) setState(() => _files.addAll(shots));
+  }
+
+  void _startScreenshot() {
+    TicketScreenshot.start(TicketScreenshotTarget.draft(
+      draftKey: _draftKey,
+      title: widget.ticketTitle,
+      returnTo: '${PerfectBoard.basePath}/detail/${widget.ticketId}',
+    ));
+    ticketToast(context, bt('screenshotStarted'));
+  }
+
+  CollectionReference<Map<String, dynamic>> get _comments =>
+      FirebaseFirestore.instance
+          .collection('Tickets')
+          .doc(widget.ticketId)
+          .collection('Comments');
+
+  CollectionReference<Map<String, dynamic>> get _attachments =>
+      FirebaseFirestore.instance
+          .collection('Tickets')
+          .doc(widget.ticketId)
+          .collection('Attachments');
+
+  Future<void> _pickFiles() async {
+    final picked = await FilePicker.platform.pickFiles(
+      withData: true,
+      allowMultiple: true,
+    );
+    if (picked == null || picked.files.isEmpty) return;
+
+    final tooBig = <String>[];
+    setState(() {
+      for (final file in picked.files) {
+        if ((file.bytes?.length ?? 0) > kTicketAttachmentMaxBytes) {
+          tooBig.add(file.name);
+        } else {
+          _files.add(file);
+        }
+      }
+    });
+    if (tooBig.isNotEmpty && mounted) {
+      ticketToast(
+        context,
+        bt('skippedTooBig', {'files': tooBig.join(', ')}),
+      );
+    }
+  }
+
+  Future<void> _send() async {
+    final text = _controller.text.trim();
+    // Basta anche solo un file: "ecco lo screenshot" non ha bisogno di testo.
+    if ((text.isEmpty && _files.isEmpty) || _sending) return;
+    setState(() => _sending = true);
+    try {
+      // L'id del commento serve prima di scriverlo: i file lo portano con sé.
+      final ref = _comments.doc();
+      for (final file in _files) {
+        await uploadTicketAttachment(
+          ticketId: widget.ticketId,
+          file: file,
+          commentId: ref.id,
+        );
+      }
+      await ref.set({
+        'author': {
+          'uid': PerfectBoard.user.uid,
+          'name': PerfectBoard.user.name,
+        },
+        'text': text,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      _controller.clear();
+      if (mounted) setState(_files.clear);
+    } catch (e) {
+      log('Ticket comment error: $e');
+      if (mounted) ticketToast(context, bt('commentFailed'));
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  minLines: 1,
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    hintText: bt('commentHint'),
+                  ),
+                ),
+              ),
+              const Gap(4),
+              IconButton(
+                tooltip: bt('addFiles'),
+                onPressed: _sending ? null : _pickFiles,
+                icon: const Icon(Icons.attach_file,
+                    size: 16, color: tertiaryColor),
+              ),
+              IconButton(
+                tooltip: bt('screenshot'),
+                onPressed: _sending ? null : _startScreenshot,
+                icon: const Icon(Icons.photo_camera,
+                    size: 16, color: tertiaryColor),
+              ),
+              const Gap(8),
+              ElevatedButton(
+                style: ButtonStyle(
+                  elevation: WidgetStateProperty.all(0),
+                ),
+                onPressed: _sending ? null : _send,
+                child: Text(_sending
+                    ? bt('sending')
+                    : bt('comment')),
+              ),
+            ],
+          ),
+          if (_files.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  for (var i = 0; i < _files.length; i++)
+                    TicketPickedFileChip(
+                      file: _files[i],
+                      onRemove: _sending
+                          ? () {}
+                          : () => setState(() => _files.removeAt(i)),
+                    ),
+                ],
+              ),
+            ),
+          const Gap(16),
+          StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            // Il più recente in alto, sotto al campo per scrivere: è quasi
+            // sempre quello che interessa, e non si scrolla per trovarlo.
+            stream:
+                _comments.orderBy('createdAt', descending: true).snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return TicketEmpty(bt('commentsUnavailable'));
+              }
+              if (!snapshot.hasData) {
+                return const TicketEmpty('…');
+              }
+              final comments = snapshot.data!.docs
+                  .map((d) => TicketComment.fromFirestore(d.id, d.data()))
+                  .toList();
+              if (comments.isEmpty) {
+                return TicketEmpty(bt('noComments'));
+              }
+              return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                stream: _attachments.orderBy('createdAt').snapshots(),
+                builder: (context, attachmentsSnapshot) {
+                  // Se gli allegati non si leggono i commenti restano
+                  // leggibili: semplicemente senza file.
+                  final byComment = <String, List<TicketAttachment>>{};
+                  for (final d in attachmentsSnapshot.data?.docs ??
+                      const <QueryDocumentSnapshot<Map<String, dynamic>>>[]) {
+                    final attachment =
+                        TicketAttachment.fromFirestore(d.id, d.data());
+                    final commentId = attachment.commentId;
+                    if (commentId == null) continue;
+                    byComment.putIfAbsent(commentId, () => []).add(attachment);
+                  }
+                  return Column(
+                    children: [
+                      for (final comment in comments) ...[
+                        _CommentBubble(
+                          comment: comment,
+                          attachments: byComment[comment.id] ?? const [],
+                        ),
+                        const Gap(10),
+                      ],
+                    ],
+                  );
+                },
+              );
+            },
+          ),
+        ],
+    );
+  }
+}
+
+/// Un commento. Chi l'ha scritto si distingue dagli altri dal colore: i tuoi
+/// in oro, gli altri in grigio.
+class _CommentBubble extends StatelessWidget {
+  final TicketComment comment;
+  final List<TicketAttachment> attachments;
+
+  const _CommentBubble({required this.comment, this.attachments = const []});
+
+  @override
+  Widget build(BuildContext context) {
+    final isMine = comment.authorUid == PerfectBoard.user.uid;
+    final color = isMine ? tertiaryColor : Colors.blueGrey;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: cardColor,
+        border: Border(left: BorderSide(color: color, width: 2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                comment.authorName.toUpperCase(),
+                style: TextStyle(
+                  color: color,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
+                ),
+              ),
+              const Gap(10),
+              Text(
+                comment.createdAt != null
+                    ? dateTimeFormat.format(comment.createdAt!)
+                    : bt('now'),
+                style: const TextStyle(color: subtitleColor, fontSize: 11),
+              ),
+            ],
+          ),
+          if (comment.text.isNotEmpty) ...[
+            const Gap(6),
+            SelectableText(
+              comment.text,
+              style: const TextStyle(
+                  color: lightTextColor, fontSize: 13, height: 1.5),
+            ),
+          ],
+          if (attachments.isNotEmpty) ...[
+            const Gap(10),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                for (var i = 0; i < attachments.length; i++)
+                  TicketAttachmentTile(
+                    attachment: attachments[i],
+                    onOpen: () => showTicketAttachmentPreview(
+                      context,
+                      attachments: attachments,
+                      initialIndex: i,
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}

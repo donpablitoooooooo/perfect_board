@@ -1,0 +1,10 @@
+.dart_tool/
+.packages
+build/
+pubspec.lock
+.idea/
+*.iml
+.DS_Store
+functions/node_modules/
+functions/serviceAccountKey.json
+functions/ticket-files/
