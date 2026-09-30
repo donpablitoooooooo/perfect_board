@@ -1,0 +1,28 @@
+rules_version = '2';
+
+// Allegati della board: `uploads/tickets/<ticketId>/<timestamp>_<nome>`.
+service firebase.storage {
+    match /b/{bucket}/o {
+
+        function isAuthenticated() {
+            return request.auth != null &&
+                    request.auth.token.email_verified == true;
+        }
+
+        function isAdmin() {
+            return isAuthenticated() &&
+                    "admin" in request.auth.token &&
+                    request.auth.token.admin == true;
+        }
+
+        match /uploads/tickets/{allPaths=**} {
+            allow read: if isAdmin();
+            // Solo file nuovi: il nome porta un timestamp apposta, e un file
+            // già caricato non si sovrascrive.
+            allow create: if isAdmin() && resource == null &&
+                    request.resource.size < 15 * 1024 * 1024;
+            allow update: if false;
+            allow delete: if isAdmin();
+        }
+    }
+}

@@ -1,0 +1,15 @@
+.dart_tool/
+.packages
+build/
+pubspec.lock
+.idea/
+*.iml
+.DS_Store
+functions/node_modules/
+functions/serviceAccountKey.json
+functions/ticket-files/
+*-debug.log
+firebase/.firebase/
+example/build/
+example/web_config.json
+example/.firebase/

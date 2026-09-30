@@ -1,0 +1,8 @@
+{
+  "FIREBASE_PROJECT_ID": "your-project-id",
+  "FIREBASE_API_KEY": "AIza...",
+  "FIREBASE_APP_ID": "1:000000000000:web:0000000000000000000000",
+  "FIREBASE_SENDER_ID": "000000000000",
+  "FIREBASE_AUTH_DOMAIN": "your-project-id.firebaseapp.com",
+  "FIREBASE_STORAGE_BUCKET": "your-project-id.firebasestorage.app"
+}

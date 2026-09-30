@@ -1,0 +1,45 @@
+rules_version = '2';
+
+// Regole della board. Se l'app ha già le sue regole, copia le funzioni che
+// mancano e il blocco `match /Tickets/...` dentro il suo `firestore.rules`.
+service cloud.firestore {
+    match /databases/{database}/documents {
+
+        // Utente loggato con email verificata e account attivo.
+        function isAuthenticated() {
+            return request.auth != null &&
+                    request.auth.token.email_verified == true &&
+                    !("disabled" in request.auth.token);
+        }
+
+        // Admin = custom claim `admin: true` (impostato lato server, per
+        // esempio con l'Admin SDK: setCustomUserClaims(uid, {admin: true})).
+        function isAdmin() {
+            return isAuthenticated() &&
+                    "admin" in request.auth.token &&
+                    request.auth.token.admin == true;
+        }
+
+        // La board: ogni admin deve poterla vedere e muovere.
+        match /Tickets/{ticketId} {
+            allow read, create, update, delete: if isAdmin();
+
+            // I commenti sono la conversazione su una scheda: li leggono e
+            // li scrivono TUTTI gli admin. Non c'è niente di riservato in
+            // una bacheca di lavoro.
+            match /Comments/{commentId} {
+                allow read, create: if isAdmin();
+                // Un commento detto è detto: si risponde, non si riscrive.
+                allow update, delete: if false;
+            }
+
+            // Metadati degli allegati; i file stanno su Storage sotto
+            // `uploads/tickets/...` (vedi storage.rules).
+            match /Attachments/{attachmentId} {
+                allow read, create, delete: if isAdmin();
+                // Un allegato si toglie e si ricarica, non si modifica.
+                allow update: if false;
+            }
+        }
+    }
+}

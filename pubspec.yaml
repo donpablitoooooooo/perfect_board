@@ -1,0 +1,40 @@
+name: perfect_board
+description: >-
+  A kanban board for work cards (bugs, requests) on Firebase, built to be
+  worked together with Claude Code: comments, attachments, annotated
+  screenshots of the app itself, Markdown export and a CLI.
+version: 0.1.0
+homepage: https://perfect-board-3ce55.web.app
+repository: https://github.com/donpablitoooooooo/perfect_board
+issue_tracker: https://github.com/donpablitoooooooo/perfect_board/issues
+topics:
+  - kanban
+  - firebase
+  - screenshot
+  - issue-tracker
+  - claude
+
+environment:
+  sdk: '>=3.6.0 <4.0.0'
+  flutter: '>=3.27.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cached_network_image: ^3.2.0
+  cloud_firestore: ^6.1.1
+  file_picker: ^10.1.9
+  file_saver: ^0.3.0
+  firebase_storage: ^13.0.5
+  gap: ^3.0.1
+  go_router: ^17.0.1
+  http: ^1.4.0
+  intl: ^0.20.2
+  printing: ^5.10.3
+  url_launcher: ^6.3.0
+  video_player: ^2.9.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
