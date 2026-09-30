@@ -5,7 +5,7 @@
   its files (attachments and screenshots) stay in memory, in the browser,
   and it cannot delete cards. The rules enforce both.
 - The example has a *Try the demo* button when `DEMO_EMAIL` and
-  `DEMO_PASSWORD` are defined.
+  `DEMO_PASSWORD` are defined, and accepts `demo` / `demo` as a shortcut.
 
 ## 0.1.0
 

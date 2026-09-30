@@ -40,7 +40,8 @@ language.
 
 ## Try it
 
-**Live demo**: <https://perfect-board-3ce55.web.app>, press *Try the demo*.
+**Live demo**: <https://perfect-board-3ce55.web.app>, press *Try the demo*
+(or sign in with `demo` / `demo`).
 The demo account can do everything except upload files (they stay in your
 browser until you reload) and delete cards.
 

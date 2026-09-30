@@ -153,6 +153,14 @@ class _LoginPageState extends State<_LoginPage> {
 
   Future<void> _signIn({String? email, String? password}) async {
     setState(() => _error = null);
+    // "demo" / "demo" è una scorciatoia per l'account demo: Firebase vuole
+    // un'email vera e una password di almeno 6 caratteri.
+    if (_demoEmail != '' &&
+        _email.text.trim().toLowerCase() == 'demo' &&
+        _password.text == 'demo') {
+      email = _demoEmail;
+      password = _demoPassword;
+    }
     try {
       final credential =
           await FirebaseAuth.instance.signInWithEmailAndPassword(
@@ -194,6 +202,11 @@ class _LoginPageState extends State<_LoginPage> {
                   onPressed: () =>
                       _signIn(email: _demoEmail, password: _demoPassword),
                   child: const Text('Try the demo'),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'or sign in with demo / demo',
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
               if (_error != null) ...[

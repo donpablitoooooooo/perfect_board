@@ -44,7 +44,7 @@ lingua.
 ## Provarla
 
 **Demo online**: <https://perfect-board-3ce55.web.app>, premi *Try the
-demo*. L'account demo può fare tutto tranne caricare file (restano nel tuo
+demo* (o entra con `demo` / `demo`). L'account demo può fare tutto tranne caricare file (restano nel tuo
 browser finché non ricarichi) ed eliminare schede.
 
 `example/` gira sugli emulatori Firebase o sul tuo progetto: vedi
