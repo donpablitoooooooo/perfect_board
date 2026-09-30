@@ -1,12 +1,12 @@
 {
   "firestore": {
-    "rules": "firestore.rules"
+    "rules": "firebase/firestore.rules"
   },
   "storage": {
-    "rules": "storage.rules"
+    "rules": "firebase/storage.rules"
   },
   "functions": {
-    "source": "../functions",
+    "source": "functions",
     "ignore": [
       "node_modules",
       ".git",

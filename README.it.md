@@ -174,7 +174,7 @@ con un'icona generica.
 1. **Regole**: `firebase/firestore.rules` e `firebase/storage.rules`. Se hai
    già le tue regole, copia dentro i blocchi `Tickets` e `uploads/tickets`.
 2. **Functions**: deploya `functions/`
-   (`cd firebase && firebase deploy --only functions`), o riesporta i
+   (`firebase deploy --only functions`, dalla radice del repo), o riesporta i
    trigger di `functions/index.js` dalle tue functions. La regione di default è
    `europe-west1`; `BOARD_FUNCTIONS_REGION` per cambiarla, in base alla
    località del database.

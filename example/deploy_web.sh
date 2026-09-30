@@ -24,7 +24,7 @@ fi
 flutter build web --release --dart-define-from-file="$config"
 
 if [[ ${1:-} != --hosting-only ]]; then
-  (cd ../firebase && firebase deploy --only firestore:rules,storage --project "$project")
+  (cd .. && firebase deploy --only firestore:rules,storage --project "$project")
 fi
 firebase deploy --only hosting --project "$project"
 

@@ -171,7 +171,7 @@ generic icon.
    already have rules, copy the `Tickets` block and `uploads/tickets` block into
    yours.
 2. **Functions**: deploy `functions/`
-   (`cd firebase && firebase deploy --only functions`), or re-export the
+   (`firebase deploy --only functions`, from the repo root), or re-export the
    triggers from `functions/index.js` in your own functions. Region defaults to
    `europe-west1`; set `BOARD_FUNCTIONS_REGION` to match your database.
 3. **CORS** on the bucket, for PDF/text previews in the browser:
