@@ -43,6 +43,9 @@ lingua.
 
 ## Provarla
 
+**Demo online**: <https://perfect-board-3ce55.web.app> (serve il login da
+admin: è un'istanza vera, non una sandbox pubblica).
+
 `example/` gira sugli emulatori Firebase o sul tuo progetto: vedi
 [example/README.md](example/README.md).
 

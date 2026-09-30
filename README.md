@@ -40,6 +40,9 @@ language.
 
 ## Try it
 
+**Live demo**: <https://perfect-board-3ce55.web.app> (admin login required:
+it is a real instance, not a public sandbox).
+
 `example/` runs on the Firebase emulators or on your project: see
 [example/README.md](example/README.md).
 
