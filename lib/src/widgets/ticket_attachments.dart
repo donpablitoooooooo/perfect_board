@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:perfect_board/src/models/ticket.dart';
 import 'package:perfect_board/src/config.dart';
+import 'package:perfect_board/src/local_attachments.dart';
 import 'package:perfect_board/src/widgets/ticket_attachment_preview.dart';
 import 'package:perfect_board/src/widgets/ticket_screenshot.dart';
 import 'package:perfect_board/src/widgets/ticket_ui.dart';
@@ -72,11 +73,25 @@ Future<void> uploadTicketAttachment({
     throw StateError('File too large: ${file.name}');
   }
 
+  final contentType = ticketAttachmentContentType(file.extension);
+
+  // Account demo: il file resta in memoria, niente Storage.
+  if (PerfectBoard.isDemo) {
+    LocalAttachments.add(
+      ticketId: ticketId,
+      name: file.name,
+      contentType: contentType,
+      bytes: bytes,
+      uploadedByName: PerfectBoard.user.name,
+      commentId: commentId,
+    );
+    return;
+  }
+
   // Il timestamp nel nome serve alle regole di Storage, che vietano la
   // sovrascrittura: due file omonimi non devono darsi fastidio.
   final stamp = DateTime.now().millisecondsSinceEpoch;
   final safeName = file.name.replaceAll(RegExp(r'[^\w\.\-]'), '_');
-  final contentType = ticketAttachmentContentType(file.extension);
 
   final upload = await FirebaseStorage.instance
       .ref('uploads/tickets/$ticketId/${stamp}_$safeName')
@@ -126,6 +141,12 @@ class TicketAttachments extends StatefulWidget {
 
 class _TicketAttachmentsState extends State<TicketAttachments> {
   bool _uploading = false;
+
+  // Uno stream solo: la lista si ridisegna anche quando cambiano gli
+  // allegati in memoria, e un nuovo abbonamento a ogni giro farebbe
+  // lampeggiare il caricamento.
+  late final Stream<QuerySnapshot<Map<String, dynamic>>> _stream =
+      _attachments.orderBy('createdAt').snapshots();
 
   CollectionReference<Map<String, dynamic>> get _attachments =>
       FirebaseFirestore.instance
@@ -195,6 +216,12 @@ class _TicketAttachmentsState extends State<TicketAttachments> {
     );
     if (confirmed != true) return;
 
+    if (attachment.isLocal) {
+      LocalAttachments.remove(widget.ticketId, attachment.id);
+      if (mounted) ticketToast(context, bt('attachmentRemoved'));
+      return;
+    }
+
     try {
       // Prima il file, poi la riga: se il file non c'è più (o non si può
       // togliere) la riga resterebbe a puntare al nulla.
@@ -240,17 +267,23 @@ class _TicketAttachmentsState extends State<TicketAttachments> {
             ),
           ],
         ),
-        StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: _attachments.orderBy('createdAt').snapshots(),
+        if (PerfectBoard.isDemo) _hint(bt('demoAttachments')),
+        ValueListenableBuilder<int>(
+        valueListenable: LocalAttachments.changes,
+        builder: (context, _, __) =>
+            StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+        stream: _stream,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return _hint(bt('attachmentsUnavailable'));
           }
           if (!snapshot.hasData) return _hint('…');
 
-          final attachments = snapshot.data!.docs
-              .map((d) => TicketAttachment.fromFirestore(d.id, d.data()))
-              .toList();
+          final attachments = [
+            ...snapshot.data!.docs
+                .map((d) => TicketAttachment.fromFirestore(d.id, d.data())),
+            ...LocalAttachments.of(widget.ticketId),
+          ];
           if (attachments.isEmpty) {
             return _hint(bt('attachmentsHint'));
           }
@@ -275,6 +308,7 @@ class _TicketAttachmentsState extends State<TicketAttachments> {
             ),
           );
           },
+        ),
         ),
       ],
     );
@@ -309,7 +343,15 @@ class TicketAttachmentTile extends StatelessWidget {
       onTap: onOpen,
       onRemove: onDelete,
       removeTooltip: bt('removeAttachment'),
-      preview: attachment.isImage
+      preview: attachment.isImage && attachment.bytes != null
+          ? Image.memory(
+              attachment.bytes!,
+              fit: BoxFit.cover,
+              cacheWidth: 320,
+              errorBuilder: (_, __, ___) =>
+                  TicketFileIcon(attachment.contentType),
+            )
+          : attachment.isImage
           ? CachedNetworkImage(
               imageUrl: attachment.url,
               fit: BoxFit.cover,

@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:perfect_board/src/config.dart';
 import 'package:perfect_board/src/models/ticket.dart';
 import 'package:perfect_board/src/widgets/ticket_ui.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +23,12 @@ import 'package:perfect_board/src/l10n.dart';
 ///
 /// Ritorna `true` se la segnalazione non c'è più.
 Future<bool> confirmAndDeleteTicket(BuildContext context, Ticket ticket) async {
+  // L'account demo le schede le sposta e le scarta, ma non le elimina: la
+  // board la condividono tutti quelli che la provano.
+  if (PerfectBoard.isDemo) {
+    ticketToast(context, bt('demoNoDelete'));
+    return false;
+  }
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (dialogContext) => AlertDialog(

@@ -55,7 +55,16 @@ cd example && flutter run -d chrome
    `web_config.json` is ignored by git; the site ends up on
    `https://YOUR-PROJECT.web.app`. / `web_config.json` è ignorato da git; il
    sito finisce su `https://IL-TUO-PROGETTO.web.app`.
-6. Optional / Facoltativo: deploy `functions/` for comment and attachment
+6. Optional, a public demo account / Facoltativo, un account demo pubblico:
+   create the user in the console, then / crea l'utente dalla console, poi
+   ```bash
+   BOARD_PROJECT_ID=YOUR-PROJECT node functions/set_admin.js demo@example.com --demo
+   ```
+   put `DEMO_EMAIL` / `DEMO_PASSWORD` in `web_config.json` and run
+   `./deploy_web.sh` again: the login page gets a *Try the demo* button. /
+   metti `DEMO_EMAIL` / `DEMO_PASSWORD` in `web_config.json` e rilancia
+   `./deploy_web.sh`: il login mostra il bottone *Try the demo*.
+7. Optional / Facoltativo: deploy `functions/` for comment and attachment
    counters (Blaze plan) / per i contatori di commenti e allegati (piano
    Blaze): `firebase deploy --only functions --project YOUR-PROJECT` from a
    `firebase.json` that points `functions` at `../functions`.

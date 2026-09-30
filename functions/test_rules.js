@@ -87,6 +87,14 @@ async function main() {
       admin: true,
     })
     .firestore();
+  const demo = env
+    .authenticatedContext('demo-uid', {
+      email_verified: true,
+      email: 'demo@example.com',
+      admin: true,
+      demo: true,
+    })
+    .firestore();
   const cliente = env
     .authenticatedContext('cliente-uid', {
       email_verified: true,
@@ -180,6 +188,41 @@ async function main() {
   await check(
     'un cliente NON legge i commenti',
     assertFails(getDoc(doc(cliente, 'Tickets/t1/Comments/c1'))),
+  );
+
+  console.log('\nAccount demo: usa la board, ma niente file e niente eliminazioni');
+  await check(
+    'il demo legge la scheda',
+    assertSucceeds(getDoc(doc(demo, 'Tickets/t1'))),
+  );
+  await check(
+    'il demo la sposta di colonna',
+    assertSucceeds(
+      setDoc(doc(demo, 'Tickets/t1'), {status: 'in_carico'}, {merge: true}),
+    ),
+  );
+  await check(
+    'il demo commenta',
+    assertSucceeds(
+      addDoc(collection(demo, 'Tickets/t1/Comments'), {
+        author: {uid: 'demo-uid', name: 'Demo'},
+        text: 'Provo la board',
+      }),
+    ),
+  );
+  await check(
+    'il demo NON registra allegati',
+    assertFails(
+      addDoc(collection(demo, 'Tickets/t1/Attachments'), {
+        name: 'x.png',
+        url: 'https://example.com/x.png',
+        contentType: 'image/png',
+      }),
+    ),
+  );
+  await check(
+    'il demo NON elimina la scheda',
+    assertFails(deleteDoc(doc(demo, 'Tickets/t1'))),
   );
 
   console.log('\nEliminare: la scheda sì, i pezzi no (li toglie il trigger)');

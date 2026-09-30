@@ -70,21 +70,25 @@ class PerfectBoard {
       () => PlatformDispatcher.instance.locale.languageCode;
   static List<BoardRefSource> _refSources = const [];
   static String _basePath = '/tickets';
+  static bool Function() _demo = () => false;
 
   /// [currentUser] è chiamato ogni volta che serve l'autore, quindi segue
   /// login e logout senza riconfigurare. [locale] idem: di solito legge la
   /// lingua scelta nell'app. [basePath] è dove l'app monta le rotte della
-  /// board (vedi `perfectBoardRoutes`).
+  /// board (vedi `perfectBoardRoutes`). [demo] dice se l'utente di adesso
+  /// è un account dimostrativo (vedi [isDemo]).
   static void configure({
     required BoardUser Function() currentUser,
     String Function()? locale,
     List<BoardRefSource> refSources = const [],
     String basePath = '/tickets',
+    bool Function()? demo,
   }) {
     _currentUser = currentUser;
     if (locale != null) _locale = locale;
     _refSources = List.unmodifiable(refSources);
     _basePath = basePath;
+    _demo = demo ?? () => false;
   }
 
   static BoardUser get user => _currentUser();
@@ -102,4 +106,10 @@ class PerfectBoard {
   }
 
   static String get basePath => _basePath;
+
+  /// Account dimostrativo: i file (allegati e schermate) non vanno su
+  /// Storage ma restano in memoria finché la pagina è aperta, e le schede
+  /// non si eliminano. Le regole lo fanno rispettare comunque, con il claim
+  /// `demo`; questo serve alla UI per non provarci nemmeno.
+  static bool get isDemo => _demo();
 }

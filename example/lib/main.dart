@@ -20,6 +20,14 @@ import 'package:perfect_board/perfect_board.dart';
 ///     --dart-define=FIREBASE_AUTH_DOMAIN=... \
 ///     --dart-define=FIREBASE_STORAGE_BUCKET=...
 const _projectId = String.fromEnvironment('FIREBASE_PROJECT_ID');
+
+/// Account demo facoltativo (vedi README): se c'è, il login mostra un
+/// bottone per entrare con quello.
+const _demoEmail = String.fromEnvironment('DEMO_EMAIL');
+const _demoPassword = String.fromEnvironment('DEMO_PASSWORD');
+
+/// Il claim `demo` dell'utente di adesso, letto a ogni nuovo token.
+bool _isDemo = false;
 const _useEmulators = _projectId == '';
 
 Future<void> main() async {
@@ -57,6 +65,11 @@ Future<void> main() async {
     );
   }
 
+  FirebaseAuth.instance.idTokenChanges().listen((user) async {
+    final token = await user?.getIdTokenResult();
+    _isDemo = token?.claims?['demo'] == true;
+  });
+
   PerfectBoard.configure(
     currentUser: () {
       final user = FirebaseAuth.instance.currentUser;
@@ -68,6 +81,7 @@ Future<void> main() async {
     },
     locale: () => 'en',
     refSources: const [_PagesRefSource()],
+    demo: () => _isDemo,
   );
 
   runApp(const ExampleApp());
@@ -137,13 +151,17 @@ class _LoginPageState extends State<_LoginPage> {
   final _password = TextEditingController();
   String? _error;
 
-  Future<void> _signIn() async {
+  Future<void> _signIn({String? email, String? password}) async {
     setState(() => _error = null);
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _email.text.trim(),
-        password: _password.text,
+      final credential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email ?? _email.text.trim(),
+        password: password ?? _password.text,
       );
+      // Il claim prima di entrare nella board, non un attimo dopo.
+      final token = await credential.user?.getIdTokenResult();
+      _isDemo = token?.claims?['demo'] == true;
     } on FirebaseAuthException catch (e) {
       setState(() => _error = e.message ?? e.code);
     }
@@ -169,7 +187,15 @@ class _LoginPageState extends State<_LoginPage> {
                 onSubmitted: (_) => _signIn(),
               ),
               const SizedBox(height: 24),
-              ElevatedButton(onPressed: _signIn, child: const Text('Sign in')),
+              FilledButton(onPressed: _signIn, child: const Text('Sign in')),
+              if (_demoEmail != '') ...[
+                const SizedBox(height: 12),
+                OutlinedButton(
+                  onPressed: () =>
+                      _signIn(email: _demoEmail, password: _demoPassword),
+                  child: const Text('Try the demo'),
+                ),
+              ],
               if (_error != null) ...[
                 const SizedBox(height: 16),
                 Text(_error!, style: const TextStyle(color: Colors.redAccent)),

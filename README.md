@@ -40,8 +40,9 @@ language.
 
 ## Try it
 
-**Live demo**: <https://perfect-board-3ce55.web.app> (admin login required:
-it is a real instance, not a public sandbox).
+**Live demo**: <https://perfect-board-3ce55.web.app>, press *Try the demo*.
+The demo account can do everything except upload files (they stay in your
+browser until you reload) and delete cards.
 
 `example/` runs on the Firebase emulators or on your project: see
 [example/README.md](example/README.md).
@@ -185,6 +186,28 @@ Admins are users with the custom claim `admin: true` and a verified email.
 ```bash
 BOARD_PROJECT_ID=your-project-id node functions/set_admin.js you@example.com
 ```
+
+### Demo accounts
+
+To let people try the board without trusting them with your Storage, make
+an account a **demo** one:
+
+```bash
+BOARD_PROJECT_ID=your-project-id node functions/set_admin.js demo@example.com --demo
+```
+
+and tell the board who it is (the claim is also enforced by the rules):
+
+```dart
+PerfectBoard.configure(
+  // …
+  demo: () => myCachedClaims['demo'] == true,
+);
+```
+
+A demo account moves, edits and comments cards, but its attachments and
+screenshots stay in memory (thumbnails and previews included) and vanish
+on reload, and it cannot delete cards.
 
 ## CLI
 

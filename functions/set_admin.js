@@ -5,7 +5,9 @@
  *
  * USO
  *   BOARD_PROJECT_ID=il-tuo-progetto node functions/set_admin.js persona@example.com
- *   … --remove   toglie il claim
+ *   … --demo     account dimostrativo: admin, ma senza file e senza
+ *                eliminare schede (claim `demo`, vedi firestore.rules)
+ *   … --remove   toglie i claim
  *
  * Credenziali come board.js: BOARD_SERVICE_ACCOUNT (JSON o base64),
  * serviceAccountKey.json accanto a questo file, o
@@ -38,6 +40,7 @@ async function main() {
   const projectId = process.env.BOARD_PROJECT_ID || '';
   const email = process.argv[2];
   const remove = process.argv.includes('--remove');
+  const demo = process.argv.includes('--demo');
   if (!projectId) fail('BOARD_PROJECT_ID mancante.');
   if (!email || email.startsWith('--')) {
     fail('Uso: node functions/set_admin.js persona@example.com [--remove]');
@@ -67,14 +70,20 @@ async function main() {
   if (!user) fail(`Nessun utente con email ${email}: crealo prima dalla console.`);
 
   const claims = {...(user.customClaims || {})};
-  if (remove) delete claims.admin;
-  else claims.admin = true;
+  if (remove) {
+    delete claims.admin;
+    delete claims.demo;
+  } else {
+    claims.admin = true;
+    if (demo) claims.demo = true;
+    else delete claims.demo;
+  }
   await admin.auth().setCustomUserClaims(user.uid, claims);
   if (!remove && !user.emailVerified) {
     await admin.auth().updateUser(user.uid, {emailVerified: true});
   }
-  console.log(`✓ ${email} ${remove ? 'non è più' : 'è'} admin della board. ` +
-    'Deve rifare il login.');
+  const role = remove ? 'non è più admin' : demo ? 'è l\'account demo' : 'è admin';
+  console.log(`✓ ${email} ${role} della board. Deve rifare il login.`);
 }
 
 main().catch((e) => fail(e.message));

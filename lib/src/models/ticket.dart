@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:perfect_board/src/config.dart';
@@ -464,6 +466,10 @@ class TicketAttachment {
   /// a chiunque lo abbia, il percorso no — serve la chiave di servizio.
   final String storagePath;
 
+  /// Il contenuto, per i file tenuti solo in memoria (account demo, vedi
+  /// `PerfectBoard.isDemo`): non hanno né link né percorso su Storage.
+  final Uint8List? bytes;
+
   const TicketAttachment({
     required this.id,
     required this.name,
@@ -474,7 +480,10 @@ class TicketAttachment {
     this.createdAt,
     this.commentId,
     this.storagePath = '',
+    this.bytes,
   });
+
+  bool get isLocal => bytes != null;
 
   /// Il percorso dentro il link di download (`…/o/<percorso>?alt=media…`):
   /// serve agli allegati caricati prima che `path` venisse salvato.

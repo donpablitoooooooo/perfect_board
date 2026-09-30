@@ -1,3 +1,12 @@
+## 0.2.0
+
+- **Demo accounts**: `PerfectBoard.configure(demo: ...)` and the `demo`
+  custom claim (`set_admin.js --demo`). A demo account uses the board but
+  its files (attachments and screenshots) stay in memory, in the browser,
+  and it cannot delete cards. The rules enforce both.
+- The example has a *Try the demo* button when `DEMO_EMAIL` and
+  `DEMO_PASSWORD` are defined.
+
 ## 0.1.0
 
 First release.

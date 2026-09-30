@@ -153,24 +153,30 @@ class _PreviewDialogState extends State<_PreviewDialog> {
   }
 
   Widget _body(TicketAttachment attachment) {
-    if (attachment.url.isEmpty) return _message(bt('previewFailed'));
+    final local = attachment.bytes;
+    if (attachment.url.isEmpty && local == null) {
+      return _message(bt('previewFailed'));
+    }
     switch (_kindOf(attachment)) {
       case _PreviewKind.image:
         return InteractiveViewer(
           maxScale: 6,
           child: Center(
-            child: CachedNetworkImage(
-              imageUrl: attachment.url,
-              fit: BoxFit.contain,
-              placeholder: (_, __) => const _Loading(),
-              errorWidget: (_, __, ___) =>
-                  _message(bt('previewFailed')),
-            ),
+            child: local != null
+                ? Image.memory(local, fit: BoxFit.contain)
+                : CachedNetworkImage(
+                  imageUrl: attachment.url,
+                  fit: BoxFit.contain,
+                  placeholder: (_, __) => const _Loading(),
+                  errorWidget: (_, __, ___) =>
+                      _message(bt('previewFailed')),
+                ),
           ),
         );
       case _PreviewKind.pdf:
         return _BytesLoader(
           url: attachment.url,
+          bytes: local,
           builder: (bytes) => PdfPreview(
             build: (_) async => bytes,
             useActions: false,
@@ -182,10 +188,13 @@ class _PreviewDialogState extends State<_PreviewDialog> {
           onError: () => _message(bt('previewFailed')),
         );
       case _PreviewKind.video:
+        // Un video in memoria non ha un link da dare al player.
+        if (local != null) return _message(bt('noPreview'));
         return _VideoPreview(url: attachment.url);
       case _PreviewKind.text:
         return _BytesLoader(
           url: attachment.url,
+          bytes: local,
           builder: (bytes) => SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: SizedBox(
@@ -233,11 +242,15 @@ class _Loading extends StatelessWidget {
 /// vede [onError], mentre "apri in una nuova scheda" continua a funzionare.
 class _BytesLoader extends StatefulWidget {
   final String url;
+
+  /// Già in memoria (allegati dell'account demo): niente da scaricare.
+  final Uint8List? bytes;
   final Widget Function(Uint8List bytes) builder;
   final Widget Function() onError;
 
   const _BytesLoader({
     required this.url,
+    this.bytes,
     required this.builder,
     required this.onError,
   });
@@ -250,6 +263,8 @@ class _BytesLoaderState extends State<_BytesLoader> {
   late final Future<Uint8List> _bytes = _load();
 
   Future<Uint8List> _load() async {
+    final bytes = widget.bytes;
+    if (bytes != null) return bytes;
     final response = await http.get(Uri.parse(widget.url));
     if (response.statusCode != 200) {
       throw StateError('HTTP ${response.statusCode}');

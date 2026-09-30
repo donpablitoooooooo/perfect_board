@@ -43,8 +43,9 @@ lingua.
 
 ## Provarla
 
-**Demo online**: <https://perfect-board-3ce55.web.app> (serve il login da
-admin: è un'istanza vera, non una sandbox pubblica).
+**Demo online**: <https://perfect-board-3ce55.web.app>, premi *Try the
+demo*. L'account demo può fare tutto tranne caricare file (restano nel tuo
+browser finché non ricarichi) ed eliminare schede.
 
 `example/` gira sugli emulatori Firebase o sul tuo progetto: vedi
 [example/README.md](example/README.md).
@@ -190,6 +191,28 @@ verificata. `functions/set_admin.js` imposta entrambi per un utente esistente:
 ```bash
 BOARD_PROJECT_ID=il-tuo-progetto node functions/set_admin.js tu@example.com
 ```
+
+### Account demo
+
+Per far provare la board senza affidare a nessuno il tuo Storage, rendi un
+account **demo**:
+
+```bash
+BOARD_PROJECT_ID=il-tuo-progetto node functions/set_admin.js demo@example.com --demo
+```
+
+e di' alla board chi è (il claim lo fanno rispettare anche le regole):
+
+```dart
+PerfectBoard.configure(
+  // …
+  demo: () => mieiClaim['demo'] == true,
+);
+```
+
+Un account demo sposta, modifica e commenta le schede, ma i suoi allegati e
+le sue schermate restano in memoria (miniature e anteprime comprese) e
+spariscono ricaricando la pagina; e non elimina schede.
 
 ## CLI
 

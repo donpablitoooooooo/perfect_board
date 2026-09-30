@@ -20,9 +20,17 @@ service cloud.firestore {
                     request.auth.token.admin == true;
         }
 
+        // Account dimostrativo (claim `demo: true`, insieme ad `admin`): usa
+        // la board ma non elimina schede e non carica file.
+        function isDemo() {
+            return "demo" in request.auth.token &&
+                    request.auth.token.demo == true;
+        }
+
         // La board: ogni admin deve poterla vedere e muovere.
         match /Tickets/{ticketId} {
-            allow read, create, update, delete: if isAdmin();
+            allow read, create, update: if isAdmin();
+            allow delete: if isAdmin() && !isDemo();
 
             // I commenti sono la conversazione su una scheda: li leggono e
             // li scrivono TUTTI gli admin. Non c'è niente di riservato in
@@ -36,7 +44,9 @@ service cloud.firestore {
             // Metadati degli allegati; i file stanno su Storage sotto
             // `uploads/tickets/...` (vedi storage.rules).
             match /Attachments/{attachmentId} {
-                allow read, create, delete: if isAdmin();
+                allow read: if isAdmin();
+                // Il demo tiene i suoi file in memoria, nel browser.
+                allow create, delete: if isAdmin() && !isDemo();
                 // Un allegato si toglie e si ricarica, non si modifica.
                 allow update: if false;
             }
