@@ -57,11 +57,10 @@ it is a real instance, not a public sandbox).
 ```yaml
 # pubspec.yaml
 dependencies:
-  perfect_board:
-    git:
-      url: https://github.com/donpablitoooooooo/perfect_board
-      ref: main
+  perfect_board: ^0.1.0
 ```
+
+or `flutter pub add perfect_board`.
 
 ## Integrate
 
@@ -220,10 +219,6 @@ Copy `.claude/commands/segnalazioni.md` into your repo's `.claude/commands/`:
   Storage under `uploads/tickets/{id}/`).
 
 Status keys are Italian for historical reasons: they are data, not text.
-
-## Roadmap
-
-- Publication on pub.dev.
 
 ## License
 

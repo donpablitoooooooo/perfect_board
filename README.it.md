@@ -61,11 +61,10 @@ admin: è un'istanza vera, non una sandbox pubblica).
 ```yaml
 # pubspec.yaml
 dependencies:
-  perfect_board:
-    git:
-      url: https://github.com/donpablitoooooooo/perfect_board
-      ref: main
+  perfect_board: ^0.1.0
 ```
+
+oppure `flutter pub add perfect_board`.
 
 ## Integrazione
 
@@ -224,10 +223,6 @@ sessione.
   `statusChangedAt`, `createdBy`, contatori.
 - `Tickets/{id}/Comments`, `Tickets/{id}/Attachments` (metadati; i file su
   Storage sotto `uploads/tickets/{id}/`).
-
-## Prossimi passi
-
-- Pubblicazione su pub.dev.
 
 ## Licenza
 

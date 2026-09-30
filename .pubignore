@@ -1,0 +1,9 @@
+# Oltre a .gitignore: roba che su pub.dev non serve.
+build/
+example/build/
+example/web_config.json
+functions/node_modules/
+functions/package-lock.json
+functions/serviceAccountKey.json
+functions/ticket-files/
+*-debug.log
