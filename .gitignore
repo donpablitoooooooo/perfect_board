@@ -11,3 +11,5 @@ functions/ticket-files/
 *-debug.log
 firebase/.firebase/
 example/build/
+example/web_config.json
+example/.firebase/

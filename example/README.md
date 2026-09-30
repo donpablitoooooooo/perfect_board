@@ -46,7 +46,16 @@ cd example && flutter run -d chrome
      --dart-define=FIREBASE_AUTH_DOMAIN=... \
      --dart-define=FIREBASE_STORAGE_BUCKET=...
    ```
-5. Optional / Facoltativo: deploy `functions/` for comment and attachment
+5. Publish it on Firebase Hosting / Pubblicalo su Firebase Hosting:
+   ```bash
+   cd example
+   cp web_config.example.json web_config.json   # fill it / compilalo
+   ./deploy_web.sh                  # rules + hosting / regole + hosting
+   ```
+   `web_config.json` is ignored by git; the site ends up on
+   `https://YOUR-PROJECT.web.app`. / `web_config.json` è ignorato da git; il
+   sito finisce su `https://IL-TUO-PROGETTO.web.app`.
+6. Optional / Facoltativo: deploy `functions/` for comment and attachment
    counters (Blaze plan) / per i contatori di commenti e allegati (piano
    Blaze): `firebase deploy --only functions --project YOUR-PROJECT` from a
    `firebase.json` that points `functions` at `../functions`.
