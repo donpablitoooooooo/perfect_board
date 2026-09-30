@@ -6,39 +6,66 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:perfect_board/perfect_board.dart';
 
-/// Esempio minimo: emulatori Firebase, un utente admin finto, la board e una
-/// sorgente di collegamenti fatta a mano.
+/// Esempio minimo di perfect_board.
+///
+/// Di default gira sugli **emulatori** (vedi README). Per un progetto vero si
+/// passano i valori della "configurazione web" della console Firebase con
+/// `--dart-define` (niente chiavi nel repo):
+///
+///   flutter run -d chrome \
+///     --dart-define=FIREBASE_PROJECT_ID=... \
+///     --dart-define=FIREBASE_API_KEY=... \
+///     --dart-define=FIREBASE_APP_ID=... \
+///     --dart-define=FIREBASE_SENDER_ID=... \
+///     --dart-define=FIREBASE_AUTH_DOMAIN=... \
+///     --dart-define=FIREBASE_STORAGE_BUCKET=...
+const _projectId = String.fromEnvironment('FIREBASE_PROJECT_ID');
+const _useEmulators = _projectId == '';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Con gli emulatori bastano valori finti; il projectId "demo-" dice agli
-  // emulatori che non esiste un progetto vero dietro.
   await Firebase.initializeApp(
-    options: const FirebaseOptions(
-      apiKey: 'demo-key',
-      appId: '1:0:web:0',
-      messagingSenderId: '0',
-      projectId: 'demo-perfect-board',
-      storageBucket: 'demo-perfect-board.appspot.com',
-    ),
+    options: _useEmulators
+        // Con gli emulatori bastano valori finti; il projectId "demo-" dice
+        // agli emulatori che non c'è un progetto vero dietro.
+        ? const FirebaseOptions(
+            apiKey: 'demo-key',
+            appId: '1:0:web:0',
+            messagingSenderId: '0',
+            projectId: 'demo-perfect-board',
+            storageBucket: 'demo-perfect-board.appspot.com',
+          )
+        : const FirebaseOptions(
+            apiKey: String.fromEnvironment('FIREBASE_API_KEY'),
+            appId: String.fromEnvironment('FIREBASE_APP_ID'),
+            messagingSenderId: String.fromEnvironment('FIREBASE_SENDER_ID'),
+            projectId: _projectId,
+            authDomain: String.fromEnvironment('FIREBASE_AUTH_DOMAIN'),
+            storageBucket: String.fromEnvironment('FIREBASE_STORAGE_BUCKET'),
+          ),
   );
-  await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
-  FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
-  await FirebaseStorage.instance.useStorageEmulator('localhost', 9199);
-
-  // L'utente lo crea `seed_admin.sh` sull'emulatore: email verificata e
-  // claim `admin`, come chiedono le regole della board.
-  await FirebaseAuth.instance.signInWithEmailAndPassword(
-    email: 'admin@example.com',
-    password: 'password',
-  );
+  if (_useEmulators) {
+    await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
+    FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
+    await FirebaseStorage.instance.useStorageEmulator('localhost', 9199);
+    // L'utente lo crea `seed_admin.sh` sull'emulatore: email verificata e
+    // claim `admin`, come chiedono le regole della board.
+    await FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: 'admin@example.com',
+      password: 'password',
+    );
+  }
 
   PerfectBoard.configure(
-    currentUser: () => BoardUser(
-      uid: FirebaseAuth.instance.currentUser?.uid ?? '',
-      name: 'Demo Admin',
-      email: 'admin@example.com',
-    ),
+    currentUser: () {
+      final user = FirebaseAuth.instance.currentUser;
+      return BoardUser(
+        uid: user?.uid ?? '',
+        name: user?.displayName ?? user?.email ?? 'Admin',
+        email: user?.email ?? '',
+      );
+    },
     locale: () => 'en',
     refSources: const [_PagesRefSource()],
   );
@@ -51,8 +78,25 @@ final _navigatorKey = GlobalKey<NavigatorState>();
 final _router = GoRouter(
   navigatorKey: _navigatorKey,
   initialLocation: '/tickets',
-  routes: perfectBoardRoutes(),
+  refreshListenable: _AuthChanges(),
+  redirect: (context, state) {
+    final signedIn = FirebaseAuth.instance.currentUser != null;
+    if (!signedIn && state.matchedLocation != '/login') return '/login';
+    if (signedIn && state.matchedLocation == '/login') return '/tickets';
+    return null;
+  },
+  routes: [
+    GoRoute(path: '/login', builder: (_, __) => const _LoginPage()),
+    ...perfectBoardRoutes(),
+  ],
 );
+
+/// Riporta il router a controllare il login quando cambia l'utente.
+class _AuthChanges extends ChangeNotifier {
+  _AuthChanges() {
+    FirebaseAuth.instance.authStateChanges().listen((_) => notifyListeners());
+  }
+}
 
 class ExampleApp extends StatelessWidget {
   const ExampleApp({super.key});
@@ -72,6 +116,66 @@ class ExampleApp extends StatelessWidget {
         navigatorKey: _navigatorKey,
         router: _router,
         child: child!,
+      ),
+    );
+  }
+}
+
+/// Login con email e password. L'utente deve avere l'email verificata e il
+/// claim `admin` (vedi `functions/set_admin.js`), o le regole non lo fanno
+/// leggere.
+class _LoginPage extends StatefulWidget {
+  const _LoginPage();
+
+  @override
+  State<_LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<_LoginPage> {
+  final _email = TextEditingController();
+  final _password = TextEditingController();
+  String? _error;
+
+  Future<void> _signIn() async {
+    setState(() => _error = null);
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _email.text.trim(),
+        password: _password.text,
+      );
+    } on FirebaseAuthException catch (e) {
+      setState(() => _error = e.message ?? e.code);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: SizedBox(
+          width: 320,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _email,
+                decoration: const InputDecoration(labelText: 'Email'),
+              ),
+              TextField(
+                controller: _password,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Password'),
+                onSubmitted: (_) => _signIn(),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(onPressed: _signIn, child: const Text('Sign in')),
+              if (_error != null) ...[
+                const SizedBox(height: 16),
+                Text(_error!, style: const TextStyle(color: Colors.redAccent)),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -41,6 +41,11 @@ diventare questo pacchetto.
 Testi in **italiano e inglese**; le chiavi su Firestore non cambiano con la
 lingua.
 
+## Provarla
+
+`example/` gira sugli emulatori Firebase o sul tuo progetto: vedi
+[example/README.md](example/README.md).
+
 ## Requisiti
 
 - Flutter ≥ 3.27, `go_router` per la navigazione.
@@ -150,6 +155,15 @@ con un'icona generica.
    scheda".
 4. **Test delle regole** (servono Java e la CLI di Firebase):
    `cd functions && npm install && npm run test:rules`.
+
+## Admin
+
+Gli admin sono gli utenti con il custom claim `admin: true` e l'email
+verificata. `functions/set_admin.js` imposta entrambi per un utente esistente:
+
+```bash
+BOARD_PROJECT_ID=il-tuo-progetto node functions/set_admin.js tu@example.com
+```
 
 ## CLI
 

@@ -38,6 +38,11 @@ being extracted into this package.
 Texts are in **Italian and English**; Firestore keys never change with the
 language.
 
+## Try it
+
+`example/` runs on the Firebase emulators or on your project: see
+[example/README.md](example/README.md).
+
 ## Requirements
 
 - Flutter ≥ 3.27, `go_router` for navigation.
@@ -145,6 +150,15 @@ generic icon.
    first). Without it, previews fall back to "open in a new tab".
 4. **Rule tests** (Java and the Firebase CLI needed):
    `cd functions && npm install && npm run test:rules`.
+
+## Admins
+
+Admins are users with the custom claim `admin: true` and a verified email.
+`functions/set_admin.js` sets both for an existing user:
+
+```bash
+BOARD_PROJECT_ID=your-project-id node functions/set_admin.js you@example.com
+```
 
 ## CLI
 
